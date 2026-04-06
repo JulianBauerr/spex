@@ -129,6 +129,26 @@ std::pair<uint64_t, std::complex<double>> apply_Fe(
                 throw std::invalid_argument(std::string("Invalid fe operator: ") + p);
         }
     }
+    return {new_basis_state, phase};
+}
+
+ankerl::unordered_dense::map<int, char>& parse_fe_string(
+    const std::string& fe_string) {
+    ankerl::unordered_dense::map<int, char> fe_map;
+    std::regex pattern(R"(([IZ\+\-])\((\d+)\))");
+    auto words_begin = std::sregex_iterator(fe_string.begin(), fe_string.end(), pattern);
+    auto words_end = std::sregex_iterator();
+
+    for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+        const std::smatch& match = *i;
+
+        char op = match[1].str()[0];
+        int qubit = std::stoi(match[2]);
+
+        fe_map[qubit] = op;
+    }
+
+    return fe_map;
 }
 
 /**
