@@ -52,7 +52,7 @@ std::pair<uint64_t, std::complex<double>> apply_Pk(
             throw std::out_of_range("Qubit index out of valid range (0-63): " + std::to_string(qubit));
         }
 
-        bool bit = (basis_state >> qubit) & 1ULL;
+        bool bit = (basis_state >> qubit) & 1ULL; // get the state of the qubit
 
         switch (p) {
             case 'I':
@@ -81,6 +81,57 @@ std::pair<uint64_t, std::complex<double>> apply_Pk(
 }
 
 /**
+ *
+ * @param fe_map represents the fermionic map with {1, Z, +, -} where Z, +, - are σ Z/+/-
+ * @param basis_state represents a state the fermionic maps is applied on. As bitstring
+ * @return a pair containing the new basis state and the phase
+ */
+std::pair<uint64_t, std::complex<double>> apply_Fe(
+    const ankerl::unordered_dense::map<int,char>& fe_map, uint64_t basis_state) {
+    uint64_t new_basis_state = basis_state;
+    std::complex<double> phase = 1.0;
+
+    for (auto& [qubit, p] : fe_map) {
+        if (qubit < 0 || qubit >= 64) {
+            throw std::out_of_range("Qubit index out of valid range (0-63): " + std::to_string(qubit));
+        }
+
+        bool bit = (basis_state >> qubit) & 1ULL;
+        switch (p) {
+            case 'I':
+                // nothing happens
+                break;
+            case 'Z':
+                // applies a phase if bit is 1
+                if (bit) {
+                    phase *= -1.0;
+                }
+                break;
+            case '+':
+                // 0 1 removes an electron
+                // 0 0
+                if (!bit) {
+                    phase = 0.0; // the result is 0
+                    break;
+                }
+                new_basis_state ^= (1ULL << qubit);
+                break;
+            case '-':
+                // 0 0 add an electron
+                // 1 0
+                if (bit) {
+                    phase = 0; // the result is 0
+                    break;
+                }
+                new_basis_state ^= (1ULL << qubit);
+                break;
+            default:
+                throw std::invalid_argument(std::string("Invalid fe operator: ") + p);
+        }
+    }
+}
+
+/**
  * Computes the inner product ⟨ψ|φ⟩ of two quantum states.
  *
  * @param psi The first quantum state (bra), represented as a State.
@@ -102,7 +153,7 @@ std::complex<double> inner_product(const State& psi, const State& phi) {
     for (const auto& [basis_state, coeff_smaller] : *smaller_state) {
         auto it = larger_state->find(basis_state);
         if (it != larger_state->end()) {
-            result += std::conj(coeff_smaller) * it->second;
+            result += std::conj(coeff_smaller) * it->second; // we always need to conjugate the psi state. In some cases with the swapping we conjugate the wrong state.
         }
     }
 
