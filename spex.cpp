@@ -457,7 +457,15 @@ PYBIND11_MODULE(spex_tequila, p) {
           "Compute the inner product of two quantum states",
           py::arg("psi"), py::arg("phi"));
 
+    // Expose apply_Fe funciton
+    p.def("apply_Fe", &apply_Fe,
+        "Applies the fe_map on the basis_state",
+        py::arg("fe_map"),py::arg("basis_state"));
 
+    // Expose parse_fe_string function
+    p.def("parse_fe_string", &parse_fe_string,
+        "parses a string into a fe_map",
+        py::arg("fe_string"));
 
     // Expose expectation_value function
     p.def("expectation_value", &expectation_value,

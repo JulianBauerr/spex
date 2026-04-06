@@ -2,6 +2,21 @@ import spex_tequila as spex
 import math
 
 def main():
+    # Parsing
+    fe_string = "-(0)Z(1)Z(2)+(3)I(4)"
+    fe_map = spex.parse_fe_string(fe_string)
+    for qubit, op in fe_map.items():
+        print(f"  Qubit {qubit}: {op}")
+    #
+    basis_state = 0b01010
+    nbs = spex.apply_Fe(fe_map ,basis_state)
+    print(f"  nbs: {nbs[0]:08b}, {nbs[1]}")
+
+if __name__ == "__main__":
+    main()
+
+
+def ol_example():
     # Example 1: Parsing a Pauli String
     print("\nExample 1: Parsing a Pauli String")
     pauli_string = "X(0)Y(1)Z(2)"
@@ -101,8 +116,3 @@ def main():
     print("Final State |ψ'> after Applying U:")
     print(spex.state_to_string(final_state, num_qubits))
     print("-" * 50)
-
-if __name__ == "__main__":
-    main()
-
-
