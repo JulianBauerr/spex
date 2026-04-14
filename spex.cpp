@@ -8,6 +8,7 @@
 #include <thread>
 #include <stdexcept>
 #include <algorithm>
+#include <iostream>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -81,74 +82,45 @@ std::pair<uint64_t, std::complex<double>> apply_Pk(
 }
 
 /**
- *
- * @param fe_map represents the fermionic map with {1, Z, +, -} where Z, +, - are σ Z/+/-
- * @param basis_state represents a state the fermionic maps is applied on. As bitstring
- * @return a pair containing the new basis state and the phase
+ * Applies a fermionic creation operator on the i-th qubit
+ * @param state The basis state on which the creation works
+ * @param i the qubit
+ * @return a tuple of the new state and the new phase
  */
-std::pair<uint64_t, std::complex<double>> apply_Fe(
-    const ankerl::unordered_dense::map<int,char>& fe_map, uint64_t basis_state) {
-    uint64_t new_basis_state = basis_state;
-    std::complex<double> phase = 1.0;
+std::pair<uint64_t, std::complex<double>> apply_fe_creation(uint64_t state, int i) {
+    bool occupied = (state >> i) & 1ULL;
+    if (occupied) return {0, 0.0};
+    uint64_t new_basis_state = state;
 
-    for (auto& [qubit, p] : fe_map) {
-        if (qubit < 0 || qubit >= 64) {
-            throw std::out_of_range("Qubit index out of valid range (0-63): " + std::to_string(qubit));
-        }
-
-        bool bit = (basis_state >> qubit) & 1ULL;
-        switch (p) {
-            case 'I':
-                // nothing happens
-                break;
-            case 'Z':
-                // applies a phase if bit is 1
-                if (bit) {
-                    phase *= -1.0;
-                }
-                break;
-            case '+':
-                // 0 1 removes an electron
-                // 0 0
-                if (!bit) {
-                    phase = 0.0; // the result is 0
-                    break;
-                }
-                new_basis_state ^= (1ULL << qubit);
-                break;
-            case '-':
-                // 0 0 add an electron
-                // 1 0
-                if (bit) {
-                    phase = 0; // the result is 0
-                    break;
-                }
-                new_basis_state ^= (1ULL << qubit);
-                break;
-            default:
-                throw std::invalid_argument(std::string("Invalid fe operator: ") + p);
-        }
+    uint64_t mask = 0;
+    for (int j = 0; j < i; j++) {
+        mask += (1ULL << j);
     }
+    bool parity = __builtin_popcountll(state & mask) % 2;
+    std::complex<double> phase = parity ? std::complex<double>(-1, 0) : std::complex<double>(1, 0);
+    new_basis_state ^= (1ULL << i);
     return {new_basis_state, phase};
 }
 
-ankerl::unordered_dense::map<int, char> parse_fe_string(
-    const std::string& fe_string) {
-    ankerl::unordered_dense::map<int, char> fe_map;
-    std::regex pattern(R"(([IZ\+\-])\((\d+)\))");
-    auto words_begin = std::sregex_iterator(fe_string.begin(), fe_string.end(), pattern);
-    auto words_end = std::sregex_iterator();
+/**
+ * Applies a fermionic annihilation operator on the i-th qubit
+ * @param state The basis state on which the creation works
+ * @param i the qubit
+ * @return a tuple of the new state and the new phase
+ */
+std::pair<uint64_t, std::complex<double>> apply_fe_annihilation(uint64_t state, int i) {
+    bool occupied = (state >> i) & 1ULL;
+    if (!occupied) return {0, 0.0};
+    uint64_t new_basis_state = state;
 
-    for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
-        const std::smatch& match = *i;
-
-        char op = match[1].str()[0];
-        int qubit = std::stoi(match[2]);
-
-        fe_map[qubit] = op;
+    uint64_t mask = 0;
+    for (int j = 0; j < i; j++) {
+        mask += (1ULL << j);
     }
-
-    return fe_map;
+    bool parity = __builtin_popcountll(state & mask) % 2;
+    std::complex<double> phase = parity ? std::complex<double>(-1, 0) : std::complex<double>(1, 0);
+    new_basis_state ^= (1ULL << i);
+    return {new_basis_state, phase};
 }
 
 /**
@@ -457,15 +429,15 @@ PYBIND11_MODULE(spex_tequila, p) {
           "Compute the inner product of two quantum states",
           py::arg("psi"), py::arg("phi"));
 
-    // Expose apply_Fe funciton
-    p.def("apply_Fe", &apply_Fe,
-        "Applies the fe_map on the basis_state",
-        py::arg("fe_map"),py::arg("basis_state"));
+    // Expose apply_fe_creation function
+    p.def("apply_fe_creation", &apply_fe_creation,
+        "",
+        py::arg("state"),py::arg("i"));
 
-    // Expose parse_fe_string function
-    p.def("parse_fe_string", &parse_fe_string,
-        "parses a string into a fe_map",
-        py::arg("fe_string"));
+    // Expose apply_Fe function
+    p.def("apply_fe_annihilation", &apply_fe_annihilation,
+        "",
+        py::arg("state"),py::arg("i"));
 
     // Expose expectation_value function
     p.def("expectation_value", &expectation_value,
