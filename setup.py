@@ -25,7 +25,7 @@ setup(
     zip_safe=False,
     python_requires=">=3.9",
     install_requires=[
-        "pybind11>=2.5.0",
+        "pybind11>=2.5.0", 'spex-tequila'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

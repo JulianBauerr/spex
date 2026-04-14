@@ -2,15 +2,12 @@ import spex_tequila as spex
 import math
 
 def main():
-    # Parsing
-    fe_string = "-(0)Z(1)Z(2)+(3)I(4)"
-    fe_map = spex.parse_fe_string(fe_string)
-    for qubit, op in fe_map.items():
-        print(f"  Qubit {qubit}: {op}")
-    #
-    basis_state = 0b01010
-    nbs = spex.apply_Fe(fe_map ,basis_state)
-    print(f"  nbs: {nbs[0]:08b}, {nbs[1]}")
+    # the right start is i=0
+    state = 0b1010101110010011
+    i = 5
+    val = spex.apply_Fe(state, i)
+    # expected {1010101110110011, -1.0}
+    print(f"{val[0]:016b} {val[1]}")
 
 if __name__ == "__main__":
     main()
