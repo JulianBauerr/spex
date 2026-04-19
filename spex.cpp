@@ -82,48 +82,6 @@ std::pair<uint64_t, std::complex<double>> apply_Pk(
 }
 
 /**
- * Applies a fermionic creation operator on the i-th qubit
- * @param state The basis state on which the creation works
- * @param i the qubit
- * @return a tuple of the new state and the new phase
- */
-std::pair<uint64_t, std::complex<double>> apply_fe_creation(uint64_t state, int i) {
-    bool occupied = (state >> i) & 1ULL;
-    if (occupied) return {0, 0.0};
-    uint64_t new_basis_state = state;
-
-    uint64_t mask = 0;
-    for (int j = 0; j < i; j++) {
-        mask += (1ULL << j);
-    }
-    bool parity = __builtin_popcountll(state & mask) % 2;
-    std::complex<double> phase = parity ? std::complex<double>(-1, 0) : std::complex<double>(1, 0);
-    new_basis_state ^= (1ULL << i);
-    return {new_basis_state, phase};
-}
-
-/**
- * Applies a fermionic annihilation operator on the i-th qubit
- * @param state The basis state on which the creation works
- * @param i the qubit
- * @return a tuple of the new state and the new phase
- */
-std::pair<uint64_t, std::complex<double>> apply_fe_annihilation(uint64_t state, int i) {
-    bool occupied = (state >> i) & 1ULL;
-    if (!occupied) return {0, 0.0};
-    uint64_t new_basis_state = state;
-
-    uint64_t mask = 0;
-    for (int j = 0; j < i; j++) {
-        mask += (1ULL << j);
-    }
-    bool parity = __builtin_popcountll(state & mask) % 2;
-    std::complex<double> phase = parity ? std::complex<double>(-1, 0) : std::complex<double>(1, 0);
-    new_basis_state ^= (1ULL << i);
-    return {new_basis_state, phase};
-}
-
-/**
  * Computes the inner product ⟨ψ|φ⟩ of two quantum states.
  *
  * @param psi The first quantum state (bra), represented as a State.
@@ -396,12 +354,86 @@ std::string state_to_string(const State& state, int num_qubits) {
     return s;
 }
 
+// Excitations
+
+/**
+ * Applies a fermionic creation operator on the i-th qubit
+ * @param state The basis state on which the creation works
+ * @param i the qubit
+ * @return a tuple of the new state and the new phase
+ */
+std::pair<uint64_t, std::complex<double>> apply_fe_creation(uint64_t state, int i) {
+    bool occupied = (state >> i) & 1ULL;
+    if (occupied) return {0, 0.0};
+    uint64_t new_basis_state = state;
+
+    uint64_t mask = 0;
+    for (int j = 0; j < i; j++) {
+        mask += (1ULL << j);
+    }
+    bool parity = __builtin_popcountll(state & mask) % 2;
+    std::complex<double> phase = parity ? std::complex<double>(-1, 0) : std::complex<double>(1, 0);
+    new_basis_state ^= (1ULL << i);
+    return {new_basis_state, phase};
+}
+
+/**
+ * Applies a fermionic annihilation operator on the i-th qubit
+ * @param state The basis state on which the creation works
+ * @param i the qubit
+ * @return a tuple of the new state and the new phase
+ */
+std::pair<uint64_t, std::complex<double>> apply_fe_annihilation(uint64_t state, int i) {
+    bool occupied = (state >> i) & 1ULL;
+    if (!occupied) return {0, 0.0};
+    uint64_t new_basis_state = state;
+
+    uint64_t mask = 0;
+    for (int j = 0; j < i; j++) {
+        mask += (1ULL << j);
+    }
+    bool parity = __builtin_popcountll(state & mask) % 2;
+    std::complex<double> phase = parity ? std::complex<double>(-1, 0) : std::complex<double>(1, 0);
+    new_basis_state ^= (1ULL << i);
+    return {new_basis_state, phase};
+}
+
+State apply_qubit_excitation(const State& state, const std::vector<int>& k,
+    const std::vector<int>& l, const double theta) {
+    // Checks
+
+    // Initials
+    State new_state = state;
+    // Loop through state
+    for (const auto& [basis_state, coeff] : state) {
+        // Check for P0
+        bool k_val = (basis_state >> k[0]) & 1ULL;
+        bool skip = false;
+        for (int i = 0; i < k.size(); i++) {
+            if (((basis_state >> k[i]) & 1ULL) != k_val) skip = true;
+            if (((basis_state >> l[i]) & 1ULL) == k_val) skip = true;
+        }
+        if (!skip) {
+            // Implement excitation
+            new_state[basis_state] = coeff * std::cos(theta / 2);
+            uint64_t new_basis_state = basis_state;
+            for (int i = 0; i < k.size(); i++) {
+                new_basis_state ^= (1ULL << k[i]);
+                new_basis_state ^= (1ULL << l[i]);
+            }
+            int c = (basis_state >> k[0]) & 1ULL ? 1 : -1;
+            new_state[new_basis_state] += c * std::sin(theta/2) * coeff;
+        }
+    }
+
+    return new_state;
+}
 
 namespace pybind11 {
 namespace detail {
 template <class Key, class T, class Hash, class KeyEqual, class Allocator>
 struct type_caster<ankerl::unordered_dense::map<Key, T, Hash, KeyEqual, Allocator>>
-    : map_caster<ankerl::unordered_dense::map<Key, T, Hash, KeyEqual, Allocator>, Key, T> 
+    : map_caster<ankerl::unordered_dense::map<Key, T, Hash, KeyEqual, Allocator>, Key, T>
 {};
 
 } 
@@ -429,15 +461,6 @@ PYBIND11_MODULE(spex_tequila, p) {
           "Compute the inner product of two quantum states",
           py::arg("psi"), py::arg("phi"));
 
-    // Expose apply_fe_creation function
-    p.def("apply_fe_creation", &apply_fe_creation,
-        "",
-        py::arg("state"),py::arg("i"));
-
-    // Expose apply_Fe function
-    p.def("apply_fe_annihilation", &apply_fe_annihilation,
-        "",
-        py::arg("state"),py::arg("i"));
 
     // Expose expectation_value function
     p.def("expectation_value", &expectation_value,
@@ -470,4 +493,19 @@ PYBIND11_MODULE(spex_tequila, p) {
     p.def("state_to_string", &state_to_string,
           "Convert a quantum state to a string representation",
           py::arg("state"), py::arg("num_qubits"));
+
+    // Expose apply_fe_creation function
+    p.def("apply_fe_creation", &apply_fe_creation,
+        "",
+        py::arg("state"),py::arg("i"));
+
+    // Expose apply_fe_annihilation function
+    p.def("apply_fe_annihilation", &apply_fe_annihilation,
+        "",
+        py::arg("state"),py::arg("i"));
+
+    // Expose apply_qubit_excitation function
+    p.def("apply_qubit_excitation", &apply_qubit_excitation,
+        "",
+        py::arg("state"), py::arg("k_vector"), py::arg("l_vector"), py::arg("theta"));
 }
