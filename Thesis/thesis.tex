@@ -1,0 +1,101 @@
+% Encoding: UTF-8
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{sikthesis}
+%\documentclass[draft]{sikthesis}
+
+\usepackage{textcomp} % special characters for text, e.g., \textmu
+\usepackage{algpseudocode} % pseudocode
+\usepackage{booktabs} % tables
+\usepackage{outlines}
+
+% Add any additional packages you need here
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Add any additional TikZ libraries you need here
+\usetikzlibrary{automata,positioning}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\clubpenalty=10000  
+%\widowpenalty=10000
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% If you need additional commands, this is the right place to define them
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Acronyms
+
+\DeclareAcronym{os}{	
+  short = OS,
+  long = operating system
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\frontmatter
+% The general introductory part of the thesis is numbered with Roman numerals.
+% The individual chapters in the introductory part are included in the table of contents,
+% but they do not have numbers.
+
+% Enter the details for the title page here
+\sikType{Bachelor's Thesis} % Type of thesis (Diploma/Bachelor/Master)
+\sikAuthor{Name} % Your name
+\sikTitle{Title of the Bachelor's or Master's Thesis} % Title of the thesis
+\sikMatnr{Student ID Number} % Student ID Number
+\sikRefereeOne{Prof. Dr. Jakob Siegfried Kottmann} % First reviewer (= supervising professor)
+\sikRefereeTwo{Prof. Dr. Mónica Benito} % Second reviewer
+\sikAdviser{} % Advisor at the department
+\sikDate{\today} % Submission date
+
+\sikTitlePage
+
+\include{abstract}
+
+
+% Table of contents
+\tableofcontents
+
+\mainmatter
+% The actual thesis starts here, and the pages are now numbered with Arabic numerals.
+
+% By placing each chapter in its own file, it becomes easier to maintain an overview.
+\include{introduction}
+\include{content}
+\include{excitations}
+\include{approaches}
+\include{implementation}
+\include{evaluation}
+\include{summary}
+
+% Lists of figures and tables
+
+\listoffigures
+\listoftables
+\bibliographystyle{abbrv}
+\bibliography{thesis}
+
+% If necessary, you can add appendices here. 
+% The appendix chapters are numbered with letters. 
+% Again, each chapter should be placed in its own file.
+
+\begin{appendix}
+\chapter{Appendix Chapter}
+If you want to add information to the thesis that is only marginally relevant 
+for understanding your work, create an appendix for this purpose.
+Internet reference \cite{heise}, reference with multiple authors \cite{liu73acm}
+\section{foo}
+\section{bar}
+\chapter{Second Appendix Chapter}
+\end{appendix}
+
+\backmatter
+
+\end{document}
