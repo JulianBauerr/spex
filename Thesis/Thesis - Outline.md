@@ -1,7 +1,7 @@
 Title - Fermionic Excitation Simulator
 # Introduction
 Motivation, problem statement, goal of the thesis
-# Theoretical Fundamentals of Quantumalgortihm
+# Theoretical Fundamentals of Quantum Computing
 - Short Introduction into states, operations and other fundamentals
 - unitary Operation and Generators
 # Excitations
@@ -33,5 +33,5 @@ Definition and Explanation
 - Check for Correctness with Tequila
 - Performance-analyse: how does the computation scale with difference states
 - Comparison of different approaches
-# Conclusion and Outlook
+# Summary and Outlook
 - Future possible Additions

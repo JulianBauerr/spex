@@ -9,6 +9,12 @@
 	\1 Structure: Addition, subtraction und multiplication of chained operators.
 \end{outline}
 
+This approach tries to follow the exact definition of the algebra operators. It begins with defining the operators itself. A function is defined that encodes the logic of the operators. Given a specific state it calculates how the operator by definition acts on this state. Given the opaerator \(a\dagger\) and the state \(\phi\) it would act as following. \\
+\begin{equation}
+	a_j^\dagger \phi = a_j^\dagger |n_0, n_1, \dots, n_j, \dots\rangle = (1 - n_j) (-1)^{\sum_{k=0}^{j-1} n_k} |n_0, n_1, \dots, 1_j, \dots\rangle
+\end{equation}
+
+
 
 \section{Approach B: Generator-based evolution (symbolically)}
 \begin{outline}

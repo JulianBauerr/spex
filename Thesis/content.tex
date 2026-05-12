@@ -2,3 +2,73 @@
 \label{c:content}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Basics}
+\subsection{Quantum States}
+In an $n$-dimensional Hilbert space with a chosen orthonormal basis, a quantum state, known as a ket vector $|\psi\rangle$, can be represented as an $n$-dimensional column vector $\vec{\psi}$:
+
+\begin{equation}
+	|\psi\rangle \doteq \vec{\psi} = \begin{pmatrix} c_1 \\ c_2 \\ \vdots \\ c_n \end{pmatrix}.
+\end{equation}
+
+Its corresponding dual state, known as a bra vector $\langle\psi|$, is represented by the conjugate transpose of this column vector, resulting in an $n$-dimensional row vector $\vec{\psi}^\dagger$:
+\begin{equation}
+	\langle\psi| \doteq \vec{\psi}^\dagger = \begin{pmatrix} c_1^* & c_2^* & \dots & c_n^* \end{pmatrix}.
+\end{equation}
+\cite[p.16f.]{Kottmann2025}
+\cite[p.10f.]{sakurai2020modern} \\ \\
+All quantum states are always normalized on the amplitude. This is to ensure the consistency with the probability interpretation. For a quantum state $\ket{\psi}$ applies
+\begin{equation}
+	\abs{c_0}^2 +\abs{c_1}^2 + \dots + \abs{c_n}^2 =1	
+\end{equation}
+\cite[p. 5]{Kottmann2025}
+
+
+
+
+\subsection{Operators and Observables}
+An operator acts on a ket from left and outputs another ket vector. Also an operator can act on a bra from the right and outputs another bra vector.
+\begin{equation}
+	X\ket{\alpha} = \ket{\beta}.
+\end{equation}
+\begin{equation}
+	\bra{\alpha}X = \bra{\beta}.
+\end{equation}
+
+The operator X is called the \textbf{null operator}, if for any ket $\ket{\alpha}$ applies
+\begin{equation}
+	X \ket{\alpha} = 0.
+\end{equation}
+
+Operators can be added
+\begin{equation}
+	X + Y = Y + X.
+\end{equation}
+
+and also multiplied. In general they are noncommutative, that is,
+\begin{equation}
+	XY \neq YX.
+\end{equation}
+but they are assoziative
+\begin{equation}
+	X(YZ) = (XY )Z= XYZ.
+\end{equation} \cite[p.11, 13-15]{sakurai2020modern} \\ \\
+Because quantum states can be represented as vectors in $\mathbb{C}^2$. An operator can be represented by a complex matrix $U$. Given the input ket $\ket{\psi}$ the output of the operation $\ket{\phi}$ can be calculated as
+\begin{equation}
+	\ket{\phi} = U\ket{\psi}
+\end{equation}
+The state needs to be normalized, therefore we cannot allow all matrices, but only unitary matrices. This ensures that normalication. 
+\cite[p. 19]{Kottmann2025}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
