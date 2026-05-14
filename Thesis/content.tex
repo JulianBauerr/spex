@@ -2,7 +2,7 @@
 \label{c:content}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Basics}
+\section{Basics} % change later
 \subsection{Quantum States}
 In an $n$-dimensional Hilbert space with a chosen orthonormal basis, a quantum state, denoted by the ket $|\psi\rangle$, can be represented as an $n$-dimensional complex column vector $\vec{\psi}$:
 \begin{equation}
@@ -47,11 +47,13 @@ Because quantum states are represented as vectors in $\mathbb{C}^n$, a linear op
 Crucially, physical operations that evolve a quantum state must preserve its probability normalization. Consequently, physical evolution operators are restricted to unitary matrices, ensuring that the inner product—and thus the normalization—remains invariant 
 \cite[p.19]{Kottmann2025}.
 
-An \textbf{Observable} of a system are physical quantities that can be observed and measured within this system. Classical examples are momentum, angular momentum or just the postion or the energy. On a N-Qubit System an observable is defined as a $2^N \times 2N$ hermitian matrix $H$. Because the operator is hermitian the mathematic guarantees that the measured values are always eigenvalues of $H$ and also real numbers.\cite[p. 16f.]{sakurai2020modern} \cite[p.8]{schleich2025quantum}  Important is also that after a measurement took place and a specific eigenvalue is obtained the quantum state collapses into the corresponding eigenstate of that observable. \cite[p.22]{sakurai2020modern}
+An \textbf{observable} represents a physical quantity of a system that can be experimentally measured. Classical examples include position, momentum, angular momentum, and energy. In an $N$-qubit system, an observable is defined mathematically as a $2^N \times 2^N$ Hermitian matrix $H$. Because the operator is Hermitian, it guarantees that all possible measurement outcomes are strictly real numbers and correspond directly to the eigenvalues of $H$ \cite[p.16f.]{sakurai2020modern}, \cite[p.8]{schleich2025quantum}. Crucially, the act of measurement fundamentally alters the system: upon obtaining a specific eigenvalue, the quantum state instantaneously collapses into the corresponding eigenstate of that observable \cite[p.22]{sakurai2020modern}.
 
-Because we can only know the probability of measuring a specifc value in quantum systems we can average the measured value over a large number of identically prepared systems and call it the \textbf{expectation value}.\cite[p.23]{sakurai2020modern} Most of the the observable we goona see in this paper are Hamiltonias and therefore the energy of a system we can  assume that the eigenvalues are ordered ($E_0 \le E_1 \le \E_2 \le \dots$) and that the eigensystem is written like this:
+Due to the inherent probabilistic nature of quantum mechanics, we generally cannot predict the outcome of a single measurement with absolute certainty. Instead, we evaluate the \textbf{expectation value}, which represents the statistical average of measured values over a large ensemble of identically prepared systems \cite[p. 23]{sakurai2020modern}. 
+
+In the context of this thesis, the primary observables of interest are Hamiltonians, which represent the total energy of the physical system. Let $H$ be the Hamiltonian. We conventionally assume that its resulting energy eigenvalues are ordered from the ground state upwards ($E_0 \le E_1 \le E_2 \le \dots$), satisfying the eigenvalue equation:
 \begin{equation}
-	H \ket{E_i} = E_i \ket{E_i}
+	H \ket{E_i} = E_i \ket{E_i}.
 \end{equation}
 	
 Given a hamiltonian Operator $H$ and a quantum state $\ket{\psi}$ the expectation value can be calculated as:
@@ -60,13 +62,6 @@ Given a hamiltonian Operator $H$ and a quantum state $\ket{\psi}$ the expectatio
 \end{equation}
 \cite[p.42]{Kottmann2025}
 
-
-
-
-
-
-
-% ToDo, needs to be finished
 
 
 
@@ -86,6 +81,34 @@ where $\theta$ is a real-valued scalar parameter (such as a time or rotation ang
 
 \subsection{Tensor Products}
 % multi-particle system's are constructed in Hilbert space using tensor products (maybe)
+
+
+
+
+\section{Fermionics} % change later 
+
+\subsection{}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
