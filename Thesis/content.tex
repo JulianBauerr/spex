@@ -13,13 +13,13 @@ Its corresponding dual state, denoted by the bra $\langle\psi|$, is represented 
 \begin{equation}
 	\langle\psi| \doteq \vec{\psi}^\dagger = \begin{pmatrix} c_1^* & c_2^* & \dots & c_n^* \end{pmatrix}
 \end{equation}
-\cite[p. 16f.]{Kottmann2025}, \cite[p. 10f.]{sakurai2020modern}.
+\cite[p.16f.]{Kottmann2025}, \cite[p. 10f.]{sakurai2020modern}.
 
 To ensure consistency with the probability interpretation, quantum states must be normalized to unity. Therefore, for a quantum state $\ket{\psi}$, the sum of the absolute squares of its probability amplitudes must equal one:
 \begin{equation}
 	\abs{c_1}^2 +\abs{c_2}^2 + \dots + \abs{c_n}^2 = 1 
 \end{equation}
-\cite[p. 5]{Kottmann2025}.
+\cite[p.5]{Kottmann2025}.
 
 \subsection{Operators and Observables}
 A linear operator acts on a ket from the left to produce another ket vector, or on a bra from the right to produce another bra vector:
@@ -37,7 +37,7 @@ Operators can be added ($X + Y = Y + X$) and multiplied. While operator multipli
 \begin{equation}
 	X(YZ) = (XY)Z = XYZ 
 \end{equation} 
-\cite[p. 11, 13-15]{sakurai2020modern}.
+\cite[p.11, 13-15]{sakurai2020modern}.
 
 Because quantum states are represented as vectors in $\mathbb{C}^n$, a linear operator can be represented by a complex $n \times n$ matrix $U$. Given an input ket $\ket{\psi}$, the resulting state $\ket{\phi}$ is calculated via matrix-vector multiplication:
 \begin{equation}
@@ -45,25 +45,40 @@ Because quantum states are represented as vectors in $\mathbb{C}^n$, a linear op
 \end{equation}
 
 Crucially, physical operations that evolve a quantum state must preserve its probability normalization. Consequently, physical evolution operators are restricted to unitary matrices, ensuring that the inner product—and thus the normalization—remains invariant 
-\cite[p. 19]{Kottmann2025}.
+\cite[p.19]{Kottmann2025}.
 
-An Observable of a system are physical quantities that can be observed within this system. Classical examples are momentum, angular momentum or just the postion or the energy. On a N-Qubit System an observable is defined as a $N \times N$ hermitian matrix.
+An \textbf{Observable} of a system are physical quantities that can be observed and measured within this system. Classical examples are momentum, angular momentum or just the postion or the energy. On a N-Qubit System an observable is defined as a $2^N \times 2N$ hermitian matrix $H$. Because the operator is hermitian the mathematic guarantees that the measured values are always eigenvalues of $H$ and also real numbers.\cite[p. 16f.]{sakurai2020modern} \cite[p.8]{schleich2025quantum}  Important is also that after a measurement took place and a specific eigenvalue is obtained the quantum state collapses into the corresponding eigenstate of that observable. \cite[p.22]{sakurai2020modern}
+
+Because we can only know the probability of measuring a specifc value in quantum systems we can average the measured value over a large number of identically prepared systems and call it the \textbf{expectation value}.\cite[p.23]{sakurai2020modern} Most of the the observable we goona see in this paper are Hamiltonias and therefore the energy of a system we can  assume that the eigenvalues are ordered ($E_0 \le E_1 \le \E_2 \le \dots$) and that the eigensystem is written like this:
+\begin{equation}
+	H \ket{E_i} = E_i \ket{E_i}
+\end{equation}
+	
+Given a hamiltonian Operator $H$ and a quantum state $\ket{\psi}$ the expectation value can be calculated as:
+\begin{equation}
+	\langle H\rangle _{\psi} \coloneqq \bra{\psi} H \ket	{\psi}
+\end{equation}
+\cite[p.42]{Kottmann2025}
+
+
+
+
+
+
+
 % ToDo, needs to be finished
 
 
 
 
 
-\subsection{Unitary Operation and Generators}
-To build a quantum circuit, we need a way to express the quantum gates we use later as our operators. Every gate can be written in the following manner:
+\subsection{Unitary Operations and Generators}
+The physical transformations applied to quantum states are represented by unitary operators. To construct parameterized quantum gates, these unitary operations are typically expressed via the exponential map:
 \begin{equation}
-	U(\theta) = e^{-i\frac{\theta}{2}G}
+	U(\theta) = e^{-i\frac{\theta}{2}G},
 \end{equation}
-here $G$ can be any hermitian matrix. Here $G$ is called the Generator.
-\cite[p. 34, 39]{Kottmann2025} \cite[p. 1]{kottmann2020feasible}
-
-
-
+where $\theta$ is a real-valued scalar parameter (such as a time or rotation angle), and $G$ is a Hermitian matrix ($G = G^\dagger$) known as the \textit{generator} of the operation.
+\cite[p.34, 39]{Kottmann2025} \cite[p.1]{kottmann2020feasible}
 
 
 
