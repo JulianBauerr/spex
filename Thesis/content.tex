@@ -4,65 +4,73 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Basics}
 \subsection{Quantum States}
-In an $n$-dimensional Hilbert space with a chosen orthonormal basis, a quantum state, known as a ket vector $|\psi\rangle$, can be represented as an $n$-dimensional column vector $\vec{\psi}$:
-
+In an $n$-dimensional Hilbert space with a chosen orthonormal basis, a quantum state, denoted by the ket $|\psi\rangle$, can be represented as an $n$-dimensional complex column vector $\vec{\psi}$:
 \begin{equation}
-	|\psi\rangle \doteq \vec{\psi} = \begin{pmatrix} c_1 \\ c_2 \\ \vdots \\ c_n \end{pmatrix}.
+	\ket{\psi} \doteq \vec{\psi} = \begin{pmatrix} c_1 \\ c_2 \\ \vdots \\ c_n \end{pmatrix}.
 \end{equation}
 
-Its corresponding dual state, known as a bra vector $\langle\psi|$, is represented by the conjugate transpose of this column vector, resulting in an $n$-dimensional row vector $\vec{\psi}^\dagger$:
+Its corresponding dual state, denoted by the bra $\langle\psi|$, is represented by the conjugate transpose of this column vector, resulting in an $n$-dimensional row vector $\vec{\psi}^\dagger$:
 \begin{equation}
-	\langle\psi| \doteq \vec{\psi}^\dagger = \begin{pmatrix} c_1^* & c_2^* & \dots & c_n^* \end{pmatrix}.
+	\langle\psi| \doteq \vec{\psi}^\dagger = \begin{pmatrix} c_1^* & c_2^* & \dots & c_n^* \end{pmatrix}
 \end{equation}
-\cite[p.16f.]{Kottmann2025}
-\cite[p.10f.]{sakurai2020modern} \\ \\
-All quantum states are always normalized on the amplitude. This is to ensure the consistency with the probability interpretation. For a quantum state $\ket{\psi}$ applies
+\cite[p. 16f.]{Kottmann2025}, \cite[p. 10f.]{sakurai2020modern}.
+
+To ensure consistency with the probability interpretation, quantum states must be normalized to unity. Therefore, for a quantum state $\ket{\psi}$, the sum of the absolute squares of its probability amplitudes must equal one:
 \begin{equation}
-	\abs{c_0}^2 +\abs{c_1}^2 + \dots + \abs{c_n}^2 =1	
+	\abs{c_1}^2 +\abs{c_2}^2 + \dots + \abs{c_n}^2 = 1 
 \end{equation}
-\cite[p. 5]{Kottmann2025}
-
-
-
+\cite[p. 5]{Kottmann2025}.
 
 \subsection{Operators and Observables}
-An operator acts on a ket from left and outputs another ket vector. Also an operator can act on a bra from the right and outputs another bra vector.
-\begin{equation}
-	X\ket{\alpha} = \ket{\beta}.
-\end{equation}
-\begin{equation}
-	\bra{\alpha}X = \bra{\beta}.
-\end{equation}
+A linear operator acts on a ket from the left to produce another ket vector, or on a bra from the right to produce another bra vector:
+\begin{align}
+	X\ket{\alpha} &= \ket{\beta}, \\
+	\bra{\alpha}X &= \bra{\beta}.
+\end{align}
 
-The operator X is called the \textbf{null operator}, if for any ket $\ket{\alpha}$ applies
+An operator $X$ is defined as the \textbf{null operator} if, for any arbitrary ket $\ket{\alpha}$, it satisfies:
 \begin{equation}
 	X \ket{\alpha} = 0.
 \end{equation}
 
-Operators can be added
+Operators can be added ($X + Y = Y + X$) and multiplied. While operator multiplication is generally noncommutative ($XY \neq YX$), it is strictly associative:
 \begin{equation}
-	X + Y = Y + X.
+	X(YZ) = (XY)Z = XYZ 
+\end{equation} 
+\cite[p. 11, 13-15]{sakurai2020modern}.
+
+Because quantum states are represented as vectors in $\mathbb{C}^n$, a linear operator can be represented by a complex $n \times n$ matrix $U$. Given an input ket $\ket{\psi}$, the resulting state $\ket{\phi}$ is calculated via matrix-vector multiplication:
+\begin{equation}
+	\ket{\phi} = U\ket{\psi}.
 \end{equation}
 
-and also multiplied. In general they are noncommutative, that is,
+Crucially, physical operations that evolve a quantum state must preserve its probability normalization. Consequently, physical evolution operators are restricted to unitary matrices, ensuring that the inner product—and thus the normalization—remains invariant 
+\cite[p. 19]{Kottmann2025}.
+
+An Observable of a system are physical quantities that can be observed within this system. Classical examples are momentum, angular momentum or just the postion or the energy. On a N-Qubit System an observable is defined as a $N \times N$ hermitian matrix.
+% ToDo, needs to be finished
+
+
+
+
+
+\subsection{Unitary Operation and Generators}
+To build a quantum circuit, we need a way to express the quantum gates we use later as our operators. Every gate can be written in the following manner:
 \begin{equation}
-	XY \neq YX.
+	U(\theta) = e^{-i\frac{\theta}{2}G}
 \end{equation}
-but they are assoziative
-\begin{equation}
-	X(YZ) = (XY )Z= XYZ.
-\end{equation} \cite[p.11, 13-15]{sakurai2020modern} \\ \\
-Because quantum states can be represented as vectors in $\mathbb{C}^2$. An operator can be represented by a complex matrix $U$. Given the input ket $\ket{\psi}$ the output of the operation $\ket{\phi}$ can be calculated as
-\begin{equation}
-	\ket{\phi} = U\ket{\psi}
-\end{equation}
-The state needs to be normalized, therefore we cannot allow all matrices, but only unitary matrices. This ensures that normalication. 
-\cite[p. 19]{Kottmann2025}
+here $G$ can be any hermitian matrix. Here $G$ is called the Generator.
+\cite[p. 34, 39]{Kottmann2025} \cite[p. 1]{kottmann2020feasible}
 
 
 
 
 
+
+
+
+\subsection{Tensor Products}
+% multi-particle system's are constructed in Hilbert space using tensor products (maybe)
 
 
 
