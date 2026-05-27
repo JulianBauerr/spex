@@ -425,7 +425,69 @@ State apply_qubit_excitation(const State& state, const std::vector<int>& k,
             new_state[new_basis_state] += c * std::sin(theta/2) * coeff;
         }
     }
+    return new_state;
+}
 
+
+State apply_fermion_excitation(const State& state, const std::vector<int>& k,
+    const std::vector<int>& l, const double theta) {
+    // Checks
+
+    // Initials
+    State new_state = state;
+    // Loop through state
+    for (const auto& [basis_state, coeff] : state) {
+        // Check for P0
+        bool k_val = (basis_state >> k[0]) & 1ULL;
+        bool skip = false;
+        for (int i = 0; i < k.size(); i++) {
+            if (((basis_state >> k[i]) & 1ULL) != k_val) skip = true;
+            if (((basis_state >> l[i]) & 1ULL) == k_val) skip = true;
+        }
+        if (!skip) {
+            // Compute the phase
+            int phase = 1;
+            uint64_t temp_state = basis_state;
+
+            // Determine operation direction:
+            // If k_val == 0, 'k' is empty and 'l' is occupied. (Applying T)
+            // If k_val == 1, 'k' is occupied and 'l' is empty. (Applying T^\dagger)
+            const std::vector<int>& annihilate_idx = (k_val == 0) ? l : k;
+            const std::vector<int>& create_idx = (k_val == 0) ? k : l;
+
+            // Apply annihilation
+            for (int idx : annihilate_idx) {
+                uint64_t mask = (1ULL << idx) - 1;
+                if (__builtin_popcountll(temp_state & mask) % 2 != 0) {
+                    phase = -phase;
+                }
+                temp_state ^= (1ULL << idx);
+            }
+
+            // Apply creation
+            for (int idx : create_idx) {
+                uint64_t mask = (1ULL << idx) - 1;
+                if (__builtin_popcountll(temp_state & mask) % 2 != 0) {
+                    phase = -phase;
+                }
+                temp_state ^= (1ULL << idx);
+            }
+
+            // bitwise state transition
+            uint64_t new_basis_state = basis_state;
+            for (int i = 0; i < k.size(); i++) {
+                new_basis_state ^= (1ULL << k[i]);
+                new_basis_state ^= (1ULL << l[i]);
+            }
+
+            // Relative sign for T or -T^\dagger
+            int c = (k_val == 1) ? -1 : 1;
+
+            // update amplitudes
+            new_state[basis_state] += coeff * (std::cos(theta / 2) - 1.0);
+            new_state[new_basis_state] += c * phase * std::sin(theta / 2) * coeff;
+        }
+    }
     return new_state;
 }
 
@@ -506,6 +568,11 @@ PYBIND11_MODULE(spex_tequila, p) {
 
     // Expose apply_qubit_excitation function
     p.def("apply_qubit_excitation", &apply_qubit_excitation,
+        "",
+        py::arg("state"), py::arg("k_vector"), py::arg("l_vector"), py::arg("theta"));
+
+    // Expose apply_qubit_excitation function
+    p.def("apply_fermion_excitation", &apply_fermion_excitation,
         "",
         py::arg("state"), py::arg("k_vector"), py::arg("l_vector"), py::arg("theta"));
 }
