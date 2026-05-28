@@ -3,7 +3,10 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Basics} % change later
-\subsection{Quantum States}
+This chapter describes \dots
+
+\subsection{XXX}
+\subsubsection{Quantum States}
 In an $n$-dimensional Hilbert space with a chosen orthonormal basis, a quantum state, denoted by the ket $|\psi\rangle$, can be represented as an $n$-dimensional complex column vector $\vec{\psi}$:
 \begin{equation}
 	\ket{\psi} \doteq \vec{\psi} = \begin{pmatrix} c_1 \\ c_2 \\ \vdots \\ c_n \end{pmatrix}.
@@ -21,7 +24,7 @@ To ensure consistency with the probability interpretation, quantum states must b
 \end{equation}
 \cite[p.5]{Kottmann2025}.
 
-\subsection{Operators and Observables}
+\subsubsection{Operators and Observables}
 A linear operator acts on a ket from the left to produce another ket vector, or on a bra from the right to produce another bra vector:
 \begin{align}
 	X\ket{\alpha} &= \ket{\beta}, \\
@@ -65,9 +68,7 @@ Given a hamiltonian Operator $H$ and a quantum state $\ket{\psi}$ the expectatio
 
 
 
-
-
-\subsection{Unitary Operations and Generators}
+\subsubsection{Unitary Operations and Generators}
 The physical transformations applied to quantum states are represented by unitary operators. To construct parameterized quantum gates, these unitary operations are typically expressed via the exponential map:
 \begin{equation}
 	U(\theta) = e^{-i\frac{\theta}{2}G},
@@ -79,24 +80,65 @@ where $\theta$ is a real-valued scalar parameter (such as a time or rotation ang
 
 
 
-\subsection{Tensor Products}
+\subsubsection{Tensor Products}
 % multi-particle system's are constructed in Hilbert space using tensor products (maybe)
 
 
 
 
-\section{Fermionics} % change later 
+\subsection{Fermions}
+Fermions are fundamental particles characterized by a half-integer spin (e.g., $1/2, 3/2, \dots$). They constitute the basic building blocks of matter, encompassing elementary particles such as electrons, protons, and neutrons. In the context of computational many-body physics, accurately simulating the behavior of fermions requires enforcing the rules that describe their interactions.
 
-\subsection{}
+\subsubsection{Indistinguishability and the Pauli Exclusion Principle}
+In classical physics, identical objects can be tracked along distinct, observable trajectories. In quantum mechanics, however, identical particles are fundamentally indistinguishable; it is physically impossible to track their individual paths or assign them persistent labels without collapsing or disturbing the system's state. Because measurable physical quantities are calculated as expectation values, which rely on the product of the wavefunction and its complex conjugate ($\bra{\psi} H \ket{\psi} = \sum_{i}{\abs{c_i}^2} E_i$), the indistinguishability principle dictates that these observables must remain strictly invariant under the permutation (exchange) of any two identical particles.
+
+The Pauli Exclusion Principle, formulated by Wolfgang Pauli in 1925, is a direct physical consequence of this indistinguishability applied specifically to fermions. It establishes that no two identical fermions can simultaneously occupy the exact same quantum state within a given system. Originally conceptualized to explain atomic electron configurations, where no two electrons can share the same four quantum numbers, this principle is a defining, non-negotiable characteristic of fermionic behavior. This exclusion must be rigorously preserved; any application of creation ($a_i^\dagger$) or annihilation ($a_i$) operators must naturally prevent multiple occupancies.
+
+\subsubsection{Wavefunction Symmetry and Antisymmetry}
+In many-body quantum mechanics, systems of identical particles are tightly constrained by symmetry. The total wavefunction of such a system must be either entirely symmetric or entirely antisymmetric under the exchange of any two identical particles.
+
+\textbf{Antisymmetric Wavefunctions:} Fermions are strictly governed by totally antisymmetric wavefunctions. Consequently, exchanging the spatial and spin coordinates of any two identical fermions introduces a global phase factor of $-1$ to the wavefunction. The Pauli Exclusion Principle is a direct mathematical corollary of this antisymmetry; if two identical fermions were to occupy the identical quantum state, their exchange would require the wavefunction to equal its own negative, implying the wavefunction must identically vanish.
+
+\textbf{Symmetric Wavefunctions:} Bosons, conversely, are described by totally symmetric wavefunctions. Exchanging any two identical bosons yields a phase factor of $+1$, leaving the wavefunction fundamentally unaltered. Free from the antisymmetric cancellation constraints that restrict fermions, identical bosons can condense into the same quantum state.
+
+\subsubsection{Distinctions Between Fermions and Qubits}
+While fermions are physical particles governed by indistinguishability, qubits are idealized, fully distinguishable two-state systems that serve as the fundamental units of quantum computation. In a quantum processor or qubit-based simulator, individual qubits are independently addressable. This distinguishability yields a crucial algebraic divergence: operators acting on disparate qubits naturally commute ($AB = BA$ or $AB - BA = 0$). In contrast, fermionic creation ($a_i^\dagger$) and annihilation ($a_i$) operators must anticommute ($a_i^\dagger a_j^\dagger = -a_j^\dagger a_i^\dagger$ or $a_i^\dagger a_j^\dagger + a_j^\dagger a_i^\dagger = 0$) to preserve wavefunction antisymmetry and enforce the Pauli Exclusion Principle.
+
+\subsubsection{Second Quantization and Fermionic Operators}
+In quantum mechanics, a many-body system of identical particles is described using the formalism of second quantization. Within this framework, the physical state of a system is manipulated via fundamental mathematical tools known as creation ($a_k^\dagger$) and annihilation ($a_k$) operators. These operators act directly upon a quantum state: $a_k^\dagger$ creates a fermion in a specific spin-orbital $k$, while $a_k$ destroys a fermion in that same orbital. Because fermions inherently obey the Pauli Exclusion Principle, these operators naturally enforce strict physical boundaries; applying a creation operator to an already occupied orbital, or an annihilation operator to an empty one, identically annihilates the wavefunction (yielding zero).
+\begin{align}
+    \hat{a} |0\rangle &= 0, \\
+    \hat{a}^\dagger |0\rangle &= |1\rangle, \\
+    \hat{a} |1\rangle &= |0\rangle, \\
+    \hat{a}^\dagger |1\rangle &= 0.
+\end{align}
+
+Crucially, to preserve the indistinguishability of fermions and guarantee that the many-particle wavefunction remains totally antisymmetric under particle exchange, these operators are mathematically constrained to strictly anticommute. However, because quantum hardware utilizes distinguishable qubits that naturally commute, fermionic operators cannot be mapped directly to single qubits. Instead, they must be explicitly constructed from composite qubit operators. Under standard orbital-to-qubit mappings, the fermionic operators are defined as:
+\begin{align}
+    \hat{a}_k^\dagger &= \mathbb{I}^{\otimes (k-1)} \otimes \hat{\sigma}_k^+ \otimes \hat{\sigma}_z^{\otimes (N-k)} \\
+    \hat{a}_k &= \mathbb{I}^{\otimes (k-1)} \otimes \hat{\sigma}_k^- \otimes \hat{\sigma}_z^{\otimes (N-k)}
+\end{align}
+This composite definition relies on two functional components to replicate fermionic behavior:
+\begin{itemize}
+    \item \textbf{Ladder Operators ($\hat{\sigma}_k^\pm$):} Defined using the standard Pauli matrices as $\hat{\sigma}_k^\pm = \frac{1}{2}(\hat{\sigma}_x \pm i\hat{\sigma}_y)$. These operators execute the local "creation" or "annihilation" at the specific target qubit $k$ by raising or lowering the computational basis state between $|0\rangle$ (empty) and $|1\rangle$ (occupied).
+    \item \textbf{Parity Strings ($\hat{\sigma}_z^{\otimes (N-k)}$):} A non-local tensor product of Pauli-$Z$ operators acting on the adjacent qubits. This string encodes the necessary parity information into the phase of the wavefunction, artificially enforcing the required fermionic antisymmetry within a inherently commuting qubit environment.
+\end{itemize}
+
+\subsubsection{The Jordan-Wigner Transformation}
+Having established the nature of fermionic operators on distinguishable hardware, a  encoding scheme is required to apply them across an entire system. The Jordan-Wigner (JW) transformation serves as the foundational mechanism for this mapping. The scheme establishes a direct bijection, mapping $N$ fermionic spin-orbitals to $N$ individual qubits. Within this framework, the computational basis states directly represent the Fock space occupation number vectors: a qubit in state $|1\rangle$ denotes an occupied spin-orbital, while $|0\rangle$ denotes an empty one.
+
+By utilizing the operator definitions established in the previous section, the JW transformation systematically applies the non-local parity strings ($\hat{\sigma}_z$) to all qubits preceding (or succeeding, depending on the chosen convention) the target site $k$. When evaluated against a quantum state, these $Z$ operators iteratively scan the adjacent orbitals, multiplying a global phase factor of $-1$ for every occupied state they encounter. This mechanism systematically and globally replicates the exact antisymmetric phase inversions demanded by the Pauli Exclusion Principle.
 
 
 
 
 
 
-
-
-
+\cite[chapter 7.1, 7.2]{sakurai2020modern}
+\cite[chapter 1.1, 5.3]{Kottmann2025}
+\cite[chapter 2.1]{schleich2025quantum}
+\cite[chapter II.E]{kottmann2020feasible}
+\cite[chapter III.B]{anand2022quantum}
 
 
 
