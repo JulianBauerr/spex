@@ -3,21 +3,41 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Approach A: Operator-Algebra}
-\begin{outline}
-	\1 Concept: Implementation of the exact Algebra
-	\1 Structure: Addition, subtraction und multiplication of chained operators.
-\end{outline}
 
-This approach tries to follow the exact definition of the algebra operators. It begins with defining the operators itself. A function is defined that encodes the logic of the operators. Given a specific state it calculates how the operator by definition acts on this state. Given the opaerator \(a\dagger\) and the state \(\phi\) it would act as following. \\
+
+\section{Approach A: Operator-Algebra}
+This approach strictly follows the fundamental algebraic definitions of the fermionic operators. It begins by defining the operators functionally, encoding their underlying mathematical logic. Given a specific quantum state, the simulation computes the exact action of the operator on that state. Because this theoretical framework operates on well-defined boundary conditions and precise commutation rules, the approach is highly amenable to test-driven development.
+
+We began by implementing the creation and annihilation operators directly. For instance, the action of the creation operator $\hat{a}_j^\dagger$ on a state $\phi$ is defined as:
 \begin{equation}
-	a_j^\dagger \phi = a_j^\dagger |n_0, n_1, \dots, n_j, \dots\rangle = (1 - n_j) (-1)^{\sum_{k=0}^{j-1} n_k} |n_0, n_1, \dots, 1_j, \dots\rangle
+	\hat{a}_j^\dagger \phi = \hat{a}_j^\dagger |n_0, n_1, \dots, n_j, \dots, n_n\rangle = (1 - n_j) (-1)^{\sum_{k=0}^{j-1} n_k} |n_0, n_1, \dots, 1_j, \dots n_n\rangle.
+\end{equation}
+The subsequent step was to build a functional framework capable of chaining these operators via algebraic addition, subtraction, and multiplication. However, it quickly became apparent that while this operator-algebra approach is conceptually straightforward to implement, it fails to meet the memory efficiency and performance requirements of the simulator. Naively chaining these operator algebras requires the algorithm to construct exponentially large, explicit matrix representations before applying them to a state vector. Because these dense matrices scale drastically with the number of orbitals, they create an unsustainable memory bottleneck. To achieve higher performance, a different, matrix-free approach was required.
+
+
+
+
+ 
+
+\section{Approach B: Generator-Based Evolution}
+
+This approach prioritizes computational efficiency by leveraging mathematical shortcuts to evaluate the time-evolution operator. To compute the excitation efficiently, we must simplify the evaluation of the unitary operation defined in Equation \eqref{unitary_operation}. As an initial simplification, we consider the qubit excitation framework, which can later be generalized to account for fermionic differences. 
+
+Consider an initial quantum state upon which the excitation is applied. Recalling the generalized generator from Equation \eqref{mult_qu_exc_generator}, the operation is fully defined by the orbital sets $\boldsymbol{k}$ and $\boldsymbol{l}$, expressing which electrons are exchanged. With these target orbitals and the initial state, the algorithm possesses all the necessary parameters. Given the generator $G^{\boldsymbol{k}}_{\boldsymbol{l}}$, the unitary operator can be expanded as:
+\begin{equation}
+	U(\theta) = e^{-i\frac{\theta}{2}G^{\boldsymbol{k}}_{\boldsymbol{l}}} = \cos\left(\frac{\theta}{2}\right) I - i\sin\left(\frac{\theta}{2}\right)G^{\boldsymbol{k}}_{\boldsymbol{l}} + \left(1 - \cos\left(\frac{\theta}{2}\right)\right) P_0.
+\end{equation}
+Here, $P_0$ represents the projector onto the nullspace of the generator $G^{\boldsymbol{k}}_{\boldsymbol{l}}$. This nullspace is spanned by all computational basis states $\ket{\boldsymbol{i}}$ for which $G^{\boldsymbol{k}}_{\boldsymbol{l}} \ket{\boldsymbol{i}} = 0$.
+
+\cite[Chapter II.A]{kottmann2020feasible}
+
+When applied to a specific electronic configuration $\ket{\Phi}$, the unitary transformation acts trivially (as the identity operator) if the configuration resides within the nullspace of the generator. Otherwise, it induces a rotation between the original configuration and the $n$-fold excited configuration:
+\begin{equation}
+	 U(\theta) \ket{\Phi} = \begin{cases} \ket{\Phi}, & \text{if } P_0\ket{\Phi} = \ket{\Phi} \\ \left(\cos\left(\frac{\theta}{2}\right) I - i\sin\left(\frac{\theta}{2}\right)G\right)\ket{\Phi}, & \text{else.} \end{cases} 
 \end{equation}
 
+From a software design perspective, this mathematical property translates into an advantageous optimization. We can utilize $P_0$ as an algorithmic filter prior to applying the excitation,  bypassing redundant calculations for basis states that remain invariant. If a given state is not in the nullspace, we simply compute the active rotational component and update the state's amplitude accordingly, significantly reducing the computational overhead.
 
 
-\section{Approach B: Generator-based evolution (symbolically)}
-\begin{outline}
-	\1 Concept: Apply Generator directly on a state 
-	\1 Unitary operation: How to calculate $U = \exp(\sum \theta_{pq} \hat{E}_{pq})$ efficient?
-\end{outline}
+
+

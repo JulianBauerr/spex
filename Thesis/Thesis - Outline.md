@@ -2,6 +2,10 @@ Title - Fermionic Excitation Simulator
 # Introduction
 Motivation, problem statement, goal of the thesis
 
+
+
+
+
 # Theoretical Fundamentals of Quantum Computing
 ## XXX
 - Short Introduction into states, operations and other fundamentals
@@ -10,6 +14,7 @@ Motivation, problem statement, goal of the thesis
 ### Operators and Observables
 ### Unitary Operations and Generators
 ### Tensor Product (maybe)
+
 
 ## Fermions
 Definition of the particle
@@ -23,6 +28,7 @@ Definition of the particle
 ### Second Quantization and Fermionic Operators
 ### Jordan-Wigner transformation
 
+
 ## Quantum Excitations
 ### General overview
 ### Qubit Excitations
@@ -30,13 +36,23 @@ Definition and Explanation
 ### Fermionic Excitations
 Definition and Explanation
 
+
+
+
+
 # Different design approaches
 ## Approach A: Operator-Algebra 
 - Concept: Implementation of the exact Algebra
 - Structure: Addition, subtraction und multiplication of chained operators.
+
+
 ## Approach B: Generator-based evolution (symbolically)
 - Concept: Apply Generator directly on a state 
 - Unitary operation: How to calculate $U = \exp(\sum \theta_{pq} \hat{E}_{pq})$ efficient?
+
+
+
+
 
 # Implementation in C++
 - Explanation
@@ -47,10 +63,18 @@ Definition and Explanation
     - Data structures
     - Optimization of the loop
 
+
+
+
+
 # Evaluation & results
 - Check for Correctness with Tequila
 - Performance-analyse: how does the computation scale with difference states
 - Comparison of different approaches
+
+
+
+
 
 # Summary and Outlook
 - Future possible Additions

@@ -71,6 +71,7 @@ Given a hamiltonian Operator $H$ and a quantum state $\ket{\psi}$ the expectatio
 \subsubsection{Unitary Operations and Generators}
 The physical transformations applied to quantum states are represented by unitary operators. To construct parameterized quantum gates, these unitary operations are typically expressed via the exponential map:
 \begin{equation}
+\label{unitary_operation}
 	U(\theta) = e^{-i\frac{\theta}{2}G},
 \end{equation}
 where $\theta$ is a real-valued scalar parameter (such as a time or rotation angle), and $G$ is a Hermitian matrix ($G = G^\dagger$) known as the \textit{generator} of the operation.
@@ -129,16 +130,64 @@ Having established the nature of fermionic operators on distinguishable hardware
 
 By utilizing the operator definitions established in the previous section, the JW transformation systematically applies the non-local parity strings ($\hat{\sigma}_z$) to all qubits preceding (or succeeding, depending on the chosen convention) the target site $k$. When evaluated against a quantum state, these $Z$ operators iteratively scan the adjacent orbitals, multiplying a global phase factor of $-1$ for every occupied state they encounter. This mechanism systematically and globally replicates the exact antisymmetric phase inversions demanded by the Pauli Exclusion Principle.
 
-
-
-
-
-
 \cite[chapter 7.1, 7.2]{sakurai2020modern}
 \cite[chapter 1.1, 5.3]{Kottmann2025}
 \cite[chapter 2.1]{schleich2025quantum}
 \cite[chapter II.E]{kottmann2020feasible}
 \cite[chapter III.B]{anand2022quantum}
+
+
+\subsection{Quantum Excitation}
+This principle unifies the preceding theoretical fundamentals, providing a mathematical framework to model the transitions of electrons between orbitals.
+\subsubsection{Fermionic Excitation}
+Fermionic excitations can be represented by a generator $G$, which is constructed from creation ($\hat{a}^\dagger$) and annihilation ($\hat{a}$) operators. For instance, the generator $G_{pq}$ describes a single excitation, denoting the transition of an electron from the $p$-th spin-orbital to the $q$-th spin-orbital, or vice versa:
+\begin{equation}
+	G_{pq} = i(\hat{a}^\dagger_p \hat{a}_q - \hat{a}^\dagger_q \hat{a}_p).
+\end{equation}
+Higher-order excitations are constructed in a similar manner. The generator $G_{pqrs}$ models a double excitation, accounting for the simultaneous transition of one electron between the $p$-th and $q$-th orbitals and a second electron between the $r$-th and $s$-th orbitals. Mathematically, this is expressed as:
+\begin{equation}
+	G_{pqrs} = i(\hat{a}^\dagger_p \hat{a}_q \hat{a}^\dagger_r \hat{a}_s - \text{h.c.})
+\end{equation}
+Here, $\text{h.c.}$ denotes the Hermitian conjugate of the preceding term. This standard notation simplifies the equation while ensuring the operator correctly captures the reverse electron exchange process, analogous to the subtracted term in the single excitation.
+
+Generalizing this concept, an $n$-fold fermionic excitation can be compactly represented by a generator $G_{\mathbf{pq}}$, which encapsulates all possible simultaneous electron exchanges between a set of occupied orbitals $\{p_k\}$ and a set of target orbitals $\{q_k\}$. Because this represents $n$ simultaneous events, it is defined as a product of $n$ operator pairs:
+\begin{equation}
+\label{mult_fe_exc_generator}
+	G_{\mathbf{pq}} = i \left( \prod_{k=1}^{n} \hat{a}^\dagger_{p_k} \hat{a}_{q_k} - \text{h.c.} \right).
+\end{equation}
+To apply these generators within a quantum simulator or on physical quantum hardware, they are constructed into an unitary Operation (e.g., $U = \exp(-i\theta G)$).
+
+\cite[chapter II.]{kottmann2020feasible}
+\cite[chapter III.A]{anand2022quantum}
+
+\subsubsection{Qubit Excitations}
+
+An alternative to constructing quantum states via unitary operations with fermionic generators is to apply excitations directly within the qubit space. These hardware-efficient operations are commonly referred to as qubit excitations, particle-preserving exchange gates, or orbital rotations. Instead of utilizing true fermionic creation ($a^\dagger$) and annihilation ($a$) operators, qubit excitations are constructed from qubit raising ($\hat{\sigma}_+$) and lowering ($\hat{\sigma}_-$) operators, defined as:
+\begin{equation}
+	\hat{\sigma}_\pm = \frac{1}{2}(\hat{\sigma}_x \pm i\hat{\sigma}_y).
+\end{equation}
+
+Mathematically, a single-qubit excitation describing a transition between qubit $i$ and qubit $a$ is defined by the unitary operator:
+\begin{equation}
+	U_{i}^{a}(\theta) = e^{\theta \left(\hat{\sigma}_+^{(a)}\hat{\sigma}_-^{(i)} - \hat{\sigma}_+^{(i)}\hat{\sigma}_-^{(a)}\right)},
+\end{equation}
+which can be equivalently expressed in terms of Pauli matrices (absorbing scalar factors into the rotation parameter $\theta$) as:
+\begin{equation}
+	U_{i}^{a}(\theta) = e^{-i\theta \left(\hat{\sigma}_x^{(a)}\hat{\sigma}_y^{(i)} - \hat{\sigma}_y^{(a)}\hat{\sigma}_x^{(i)}\right)}.
+\end{equation}
+This operator acts locally on the target qubits, functioning as a rotation matrix exclusively within the $\{|01\rangle, |10\rangle\}$ subspace.
+
+\cite[Chapter IV.A.1.b.]{anand2022quantum}
+
+This concept naturally extends to higher-order excitations. Given sets of target and occupied orbitals, denoted by vectors $\boldsymbol{k}$ and $\boldsymbol{l}$ respectively, the generator for a multiple-qubit excitation can be generalized as:
+\begin{equation}
+\label{mult_qu_exc_generator}
+	G^{\boldsymbol{k}}_{\boldsymbol{l}} = i\left(\prod_n \hat{\sigma}^-_{k_n} \prod_m \hat{\sigma}^+_{l_m} - \text{h.c.} \right).
+\end{equation}
+
+%% Switch fermionic and qubit excitation chapter?
+
+
 
 
 
