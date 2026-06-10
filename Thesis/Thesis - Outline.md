@@ -1,80 +1,74 @@
 Title - Fermionic Excitation Simulator
-# Introduction
+# 1. Introduction
 Motivation, problem statement, goal of the thesis
 
+---
 
-
-
-
-# Theoretical Fundamentals of Quantum Computing
-## XXX
-- Short Introduction into states, operations and other fundamentals
-- unitary Operation and Generators
+# 2. Theoretical Fundamentals of Quantum Computing
+## Fundamentals of Quantum Information
 ### Quantum states
+### Tensor Product
 ### Operators and Observables
 ### Unitary Operations and Generators
-### Tensor Product (maybe)
 
-
-## Fermions
-Definition of the particle
-- Pauli Exclusion Principle
-- Spin and the Spin-Statistics Theorem
-- Wavefunction types (a)symmetric
-### The Pauli Exclusion Principle
+## Fermionic Many-Body Systems
+### Indistinguishability
 ### Wavefunction Symmetry and Antisymmetry
-### Indistinguishability & Pauli Exclusion
-### Differences: Fermions vs. Qubits
-### Second Quantization and Fermionic Operators
-### Jordan-Wigner transformation
+### The Pauli Exclusion Principle
 
+## The Second Quantization Framework
+### Fock space (ToDo)
+### Fermionic Operators
 
-## Quantum Excitations
+## Mapping Fermions to Quantum Hardware
+### The Hardware Constraint: Fermions vs. Qubits
+### The Jordan-Wigner Transformation
+
+## Simulating Excitations
 ### General overview
 ### Qubit Excitations
-Definition and Explanation
 ### Fermionic Excitations
-Definition and Explanation
 
+---
 
+## 3. Algorithmic Design of the Matrix-Free Simulator
+no C++ syntax)
 
+### 3.2 Direct State Evolution
+- Bypass full matrix exponentiation $U = \exp(\sum \theta \hat{E})$
+- Restrict operations strictly to the affected 2D subspace (affected bits)
+- Apply amplitude updates using analytical evaluations: $\cos(\theta/2)$ and $\sin(\theta/2)$
+### 3.3 Enforcing Fermionic Statistics (Phase Algorithm)
+- Algorithm to calculate Jordan-Wigner Z-string (parity)
+- Count occupied states between target indices
+- Trigger phase flips based on count (logic for `phase = -phase`)
 
+---
 
-# Different design approaches
-## Approach A: Operator-Algebra 
-- Concept: Implementation of the exact Algebra
-- Structure: Addition, subtraction und multiplication of chained operators.
+## 4. My C++ Implementation
+(code snippets and computer science concepts)
 
+### 4.1 Core Data Structures
+- Detail container choice for the State (e.g., `std::map<uint64_t, double>` vs. `std::unordered_map`)
+- Justify this structural choice
+### 4.2 Bitwise Operations & Hardware Acceleration
+- Apply `(1ULL << idx)` for bit masking
+- Use `^` for flipping bits (creation/annihilation logic)
+- Leverage `__builtin_popcountll()` for hardware-accelerated set-bit counting ( speed-up for fermionic phase calculations)
+### 4.3 Subspace Filtering (Optimization)
+- Breakdown of "skip" logic (checking P0)
+- Explain how bypassing unaffected basis states skips unnecessary math and saves compute time
 
-## Approach B: Generator-based evolution (symbolically)
-- Concept: Apply Generator directly on a state 
-- Unitary operation: How to calculate $U = \exp(\sum \theta_{pq} \hat{E}_{pq})$ efficient?
+---
 
+## 5. Evaluation & Results
+(comparing custom simulator against Tequilla)
 
+### 5.1 Validation
+- Prove algorithmic correctness
+- Mathematical comparison: My output vs. Tequila's output
+### 5.2 Performance Benchmarking (maybe)
+- Measure runtime scaling vs. increasing qubit/fermion count
+- Key Graph: Compare my custom C++ runtime vs. Tequila's runtime on the exact same system (highlighting the speed of my matrix-free approach for specific excitations)
 
-
-
-# Implementation in C++
-- Explanation
-- Decision on implementation
-- Software architecture
-- Effizienz strategy:
-    - Why C++ (Memory management, Speed, etc.)
-    - Data structures
-    - Optimization of the loop
-
-
-
-
-
-# Evaluation & results
-- Check for Correctness with Tequila
-- Performance-analyse: how does the computation scale with difference states
-- Comparison of different approaches
-
-
-
-
-
-# Summary and Outlook
-- Future possible Additions
+---
