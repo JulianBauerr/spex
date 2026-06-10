@@ -1,27 +1,15 @@
-\chapter{Different design approaches}
+\chapter{Algorithmic Design of the Matrix-Free Simulator}
 \label{c:approaches}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
-\section{Approach A: Operator-Algebra}
-This approach strictly follows the fundamental algebraic definitions of the fermionic operators. It begins by defining the operators functionally, encoding their underlying mathematical logic. Given a specific quantum state, the simulation computes the exact action of the operator on that state. Because this theoretical framework operates on well-defined boundary conditions and precise commutation rules, the approach is highly amenable to test-driven development.
-
-We began by implementing the creation and annihilation operators directly. For instance, the action of the creation operator $\hat{a}_j^\dagger$ on a state $\phi$ is defined as:
-\begin{equation}
-	\hat{a}_j^\dagger \phi = \hat{a}_j^\dagger |n_0, n_1, \dots, n_j, \dots, n_n\rangle = (1 - n_j) (-1)^{\sum_{k=0}^{j-1} n_k} |n_0, n_1, \dots, 1_j, \dots n_n\rangle.
-\end{equation}
-The subsequent step was to build a functional framework capable of chaining these operators via algebraic addition, subtraction, and multiplication. However, it quickly became apparent that while this operator-algebra approach is conceptually straightforward to implement, it fails to meet the memory efficiency and performance requirements of the simulator. Naively chaining these operator algebras requires the algorithm to construct exponentially large, explicit matrix representations before applying them to a state vector. Because these dense matrices scale drastically with the number of orbitals, they create an unsustainable memory bottleneck. To achieve higher performance, a different, matrix-free approach was required.
+\section{State Representation}
 
 
 
 
- 
-
-\section{Approach B: Generator-Based Evolution}
-
-This approach prioritizes computational efficiency by leveraging mathematical shortcuts to evaluate the time-evolution operator. To compute the excitation efficiently, we must simplify the evaluation of the unitary operation defined in Equation \eqref{unitary_operation}. As an initial simplification, we consider the qubit excitation framework, which can later be generalized to account for fermionic differences. 
+\section{Direct State Evolution}
+Rather than relying on computationally prohibitive full matrix exponentiation to evaluate the time-evolution operator $U = \exp(\sum \theta \hat{E})$, the direct state evolution approach exploits the algebraic properties of the generator to execute localized state updates. To compute the excitation efficiently, we must simplify the evaluation of the unitary operation defined in Equation \eqref{unitary_operation}. As an initial simplification, we consider the qubit excitation framework, which can later be generalized to account for fermionic differences. 
 
 Consider an initial quantum state upon which the excitation is applied. Recalling the generalized generator from Equation \eqref{mult_qu_exc_generator}, the operation is fully defined by the orbital sets $\boldsymbol{k}$ and $\boldsymbol{l}$, expressing which electrons are exchanged. With these target orbitals and the initial state, the algorithm possesses all the necessary parameters. Given the generator $G^{\boldsymbol{k}}_{\boldsymbol{l}}$, the unitary operator can be expanded as:
 \begin{equation}
@@ -35,7 +23,14 @@ When applied to a specific electronic configuration $\ket{\Phi}$, the unitary tr
 \end{equation}
 \cite[Chapter II.A]{kottmann2020feasible}
 
-From a software design perspective, this mathematical property translates into an advantageous optimization. We can utilize $P_0$ as an algorithmic filter prior to applying the excitation,  bypassing redundant calculations for basis states that remain invariant. If a given state is not in the nullspace, we simply compute the active rotational component and update the state's amplitude accordingly, significantly reducing the computational overhead.
+
+
+
+
+
+\section{Enforcing Fermionic Statistics (Phase Algorithm)}
+
+
 
 
 
