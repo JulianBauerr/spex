@@ -3,15 +3,11 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{State Representation}
 
-
-
-
-\section{Direct State Evolution}
+\section{Algorithmic Evaluation of Excitations}
 Rather than relying on computationally prohibitive full matrix exponentiation to evaluate the time-evolution operator $U = \exp(\sum \theta \hat{E})$, the direct state evolution approach exploits the algebraic properties of the generator to execute localized state updates. To compute the excitation efficiently, we must simplify the evaluation of the unitary operation defined in Equation \eqref{unitary_operation}. As an initial simplification, we consider the qubit excitation framework, which can later be generalized to account for fermionic differences. 
 
-Consider an initial quantum state upon which the excitation is applied. Recalling the generalized generator from Equation \eqref{mult_qu_exc_generator}, the operation is fully defined by the orbital sets $\boldsymbol{k}$ and $\boldsymbol{l}$, expressing which electrons are exchanged. With these target orbitals and the initial state, the algorithm possesses all the necessary parameters. Given the generator $G^{\boldsymbol{k}}_{\boldsymbol{l}}$, the unitary operator can be expanded as:
+Consider an initial quantum state upon which the excitation is applied. Recalling the generalized generator from Equation \eqref{eq:mult_qu_exc_generator}, the operation is fully defined by the orbital sets $\boldsymbol{k}$ and $\boldsymbol{l}$, expressing which electrons are exchanged. With these target orbitals and the initial state, the algorithm possesses all the necessary parameters. Given the generator $G^{\boldsymbol{k}}_{\boldsymbol{l}}$, the unitary operator can be expanded as:
 \begin{equation}
 	U(\theta) = e^{-i\frac{\theta}{2}G^{\boldsymbol{k}}_{\boldsymbol{l}}} = \cos\left(\frac{\theta}{2}\right) I - i\sin\left(\frac{\theta}{2}\right)G^{\boldsymbol{k}}_{\boldsymbol{l}} + \left(1 - \cos\left(\frac{\theta}{2}\right)\right) P_0.
 \end{equation}
