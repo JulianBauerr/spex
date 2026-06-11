@@ -89,10 +89,47 @@
 
 \appendix
 \chapter{Appendix Chapter}
-If you want to add information to the thesis that is only marginally relevant 
-for understanding your work, create an appendix for this purpose.
-Internet reference , reference with multiple authors
-\section{foo}
+\section{Qubit Excitation Unitary Operation -- Algebraic Derivation}
+
+Starting from the definition of the qubit excitation unitary in \eqref{eq:qubit_exc_unitary_def}, we can express the Generatro in terms of the ladder operators defined in \eqref{eq:ladder_operators}. To demonstrate this, we expand the constituent terms step-by-step. Expanding the first term, $(\hat{\sigma}^{(b)}_+ \hat{\sigma}^{(i)}_-)$, yields:
+\begin{equation}
+  \frac{1}{4}\left( \hat{\sigma}^{(b)}_x + i \hat{\sigma}^{(b)}_y \right) \left( \hat{\sigma}^{(i)}_x - i \hat{\sigma}^{(i)}_y \right) =
+  \frac{1}{4} \left(
+                \hat{\sigma}^{(b)}_x \hat{\sigma}^{(i)}_x -
+    i\hat{\sigma}^{(b)}_x \hat{\sigma}^{(i)}_y +
+    i\hat{\sigma}^{(b)}_y \hat{\sigma}^{(i)}_x +
+                \hat{\sigma}^{(b)}_y \hat{\sigma}^{(i)}_y
+  \right).
+\end{equation}
+
+Similarly, expanding the second term, $(\hat{\sigma}^{(b)}_- \hat{\sigma}^{(i)}_+)$, gives:
+\begin{equation}
+  \frac{1}{4}\left( \hat{\sigma}^{(b)}_x - i \hat{\sigma}^{(b)}_y \right) \left( \hat{\sigma}^{(i)}_x + i \hat{\sigma}^{(i)}_y \right) =
+  \frac{1}{4} \left(
+                \hat{\sigma}^{(b)}_x \hat{\sigma}^{(i)}_x +
+    i\hat{\sigma}^{(b)}_x \hat{\sigma}^{(i)}_y -
+    i\hat{\sigma}^{(b)}_y \hat{\sigma}^{(i)}_x +
+                \hat{\sigma}^{(b)}_y \hat{\sigma}^{(i)}_y
+  \right).
+\end{equation}
+
+The definition of the generator requires subtracting these two expressions. Upon subtraction, the identical real components $\left( \hat{\sigma}^{(b)}_x \hat{\sigma}^{(i)}_x \text{and} \hat{\sigma}^{(b)}_y \hat{\sigma}^{(i)}_y \right)$cancel out entirely. Only the imaginary terms remain, reducing the final expression to:
+\begin{equation}
+  \frac{1}{4}
+  \left(
+    -2i\hat{\sigma}^{(b)}_x \hat{\sigma}^{(i)}_y +
+  2i\hat{\sigma}^{(b)}_y \hat{\sigma}^{(i)}_x
+  \right) =
+  - \frac{i}{2}
+  \left(
+    \hat{\sigma}^{(b)}_x \hat{\sigma}^{(i)}_y -
+    \hat{\sigma}^{(b)}_y \hat{\sigma}^{(i)}_x
+  \right).
+\end{equation}
+The $-\frac{i}{2}$ gets dropped for simplicity.
+\cite[chapter IV.A]{anand2022quantum}
+
+
 \section{bar}
 \chapter{Second Appendix Chapter}
 
