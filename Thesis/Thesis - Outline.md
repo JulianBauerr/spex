@@ -17,7 +17,7 @@ Motivation, problem statement, goal of the thesis
 ### The Pauli Exclusion Principle
 
 ## The Second Quantization Framework
-### Fock space (ToDo)
+### Fock space
 ### Fermionic Operators
 
 ## Mapping Fermions to Quantum Hardware
@@ -25,7 +25,6 @@ Motivation, problem statement, goal of the thesis
 ### The Jordan-Wigner Transformation
 
 ## Simulating Excitations
-### General overview
 ### Qubit Excitations
 ### Fermionic Excitations
 

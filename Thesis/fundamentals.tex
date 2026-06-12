@@ -7,7 +7,9 @@
 % Section: Fundamentals of Quantum Information
 % ==========================================
 \section{Fundamentals of Quantum Information}
-This chapter describes \dots
+This section outlines the core principles of quantum information theory, establishing the essential theoretical vocabulary necessary for navigating the complexities of quantum computation.
+
+We begin by defining the mathematical representation of quantum states. To describe composite systems consisting of multiple interacting components, we introduce the tensor product, which enables us also to represent the superpostions. Within this combined space, measure physical properties and defining interactions requires linear operators and observables. Finally, we detail the unitary operations and their underlying mathematical generators. Together, these foundational concepts provide the prerequisite knowledge required to understand the quantum formalisms discussed in subsequent chapters.
 
 % ==========================================
 % Subsection: Quantum States
@@ -25,7 +27,7 @@ Its corresponding dual state, denoted by the bra $\bra{\psi}$, is represented by
 \begin{equation}
     \langle\psi| \doteq \vec{\psi}^\dagger =
     \begin{pmatrix}
-         c_1^* & c_2^* & \dots & c_n^*
+        c_1^* & c_2^* & \dots & c_n^*
     \end{pmatrix}
 \end{equation}
 \cite[p.16f.]{Kottmann2025}
@@ -128,7 +130,8 @@ where $\theta$ is a real-valued scalar parameter (such as a time or rotation ang
 % Section: Fermionic Many-Body Systems
 % ==========================================
 \section{Fermionic Many-Body Systems}
-Fermions are fundamental particles characterized by a half-integer spin (e.g., $1/2, 3/2, \dots$). They constitute the basic building blocks of matter, encompassing elementary particles such as electrons, protons, and neutrons. In the context of computational many-body physics, accurately simulating the behavior of fermions requires enforcing the rules that describe their interactions.
+Fermions are fundamental particles such as electrons, protons, and neutrons, constitute the primary building blocks of matter. In the context of computational many-body physics, the challenge of simulating these systems lies not in their isolated particle properties, but in the collective quantum mechanical rules governing their many-body dynamics. Specifically, a simulation must describe the rules of fermions and their interactions accurately.
+\cite[chapter 6.1]{benito_kottmann_qc_2025}
 
 % ==========================================
 % Subsection: Indistinguishability
@@ -162,14 +165,35 @@ The Pauli Exclusion Principle, formulated by Wolfgang Pauli in 1925, is a direct
 % Section: The Second Quantization Framework
 % ==========================================
 \section{The Second Quantization Framework}
+In the first quantization formalism, describing a many-body fermionic system requires the explicit construction of fully antisymmetric wavefunctions. As the number of particles increases, tracking the coordinates of individual indistinguishable particles becomes hard to deal. The second quantization framework fundamentally resolves this bottleneck. Rather than defining explicit wavefunctions for individual particles, it shifts the perspective to the occupation of predefined single-particle states within a Fock space. Particle indistinguishability and wavefunction antisymmetry are not discarded, they are rather embedded directly into the anticommutation algebra of the fermionic creation and annihilation operators. This provides a scalable, operator-driven foundation.
+
 \cite[chapter 2.1]{schleich2025quantum}
+\cite[chapter 6.5]{benito_kottmann_qc_2025}
+\cite[chapter 7.7.1]{sakurai2020modern}
 
 % ==========================================
 % Subsection: Fock Space
 % ==========================================
 \subsection{Fock Space}
-% ToDo
-\cite[chapter 7.7.1]{sakurai2020modern}
+To mathematically formalize the second quantization framework, we require a state space capable of accommodating a variable number of particles. This is achieved by constructing the Fock space, $\mathcal{F}$, which is defined as the direct sum of $N$-particle Hilbert spaces. This structure allows us to express states without being restricted to a fixed particle number.
+
+Because this space utilizes the second quantization formalism, it does not track the explicit spatial coordinates of each particle. Instead, states in the Fock space are expressed using the occupation number representation:
+\begin{equation}
+    \ket{\psi} = \ket{n_1, n_2, \dots, n_i, \dots}.
+\end{equation}
+In this notation, each index $i$ corresponds to a specific single-particle state (or spin-orbital), and $n_i$ denotes its respective occupation number. Note that due to the Pauli exclusion principle, the occupation number for fermions is strictly restricted to $n_i \in \{0, 1\}$.
+
+To illustrate this representation, we can define several fundamental states. The vacuum state, representing a system empty system without any particles, is denoted as:
+\begin{equation}
+    \ket{0, 0, \dots, 0, \dots} = \ket{\boldsymbol{0}}.
+\end{equation}
+
+A single-particle state, where only the $i$-th spin-orbital is occupied, is written by setting $n_i = 1$:
+\begin{equation}
+    \ket{0, \dots, n_i=1, \dots} = \ket{k_i}.
+\end{equation}
+
+More complex, multi-particle states are systematically generated by applying creation and annihilation operators to these basis states. For example in a system with 4 spin-orbitals, the occupation vector $\ket{0110}$  indicates that the second and third spin-orbitals are occupied by particles, while the first and fourth remain empty.
 
 % ==========================================
 % Subsection: Fermionic Operators
@@ -190,6 +214,7 @@ In quantum mechanics, a many-body system of identical particles is described usi
 % Section: Mapping Fermions to Quantum Hardware
 % ==========================================
 \section{Mapping Fermions to Quantum Hardware}
+The objective of a fermionic simulator is to evaluate the dynamics of many-body fermionic systems using qubit-based architectures. However, quantum hardware exclusively executes operations on distinguishable qubits. Consequently, a mathematically encoding scheme is required to translate fermionic behavior into a native qubit representation. This section first examines the fundamental algebraic mismatch between fermions and qubits, and subsequently introduces the specific mapping mechanisms to bridge this hardware gap.
 
 % ==========================================
 % Subsection: The Hardware Constraint: Fermions vs. Qubits
@@ -247,12 +272,16 @@ When evaluated against a quantum state, these non-local parity strings ($\hat{\s
 % Section: Simulating Excitations
 % ==========================================
 \section{Simulating Excitations}
+An excitation in the quantum mechanic describes the transition of a particle such as an electron from a lower energy orbital to a higher energy orbital. We can use this phänomena to move particles between the orbitals and therefore manipulate our current state of the system. This is gonna be our goal to achieve in our simulator.
+
+Because this principle works different depending on if the system we work with is a qubit or a fermionic one, we gonna discuss the differences in this section. In general we use for both excitations a rotation operator and change the Generator of each one.
 
 % ==========================================
-% Subsection: General Overview
 % ==========================================
-\subsection{General Overview}
-% Todo
+\section{Simulating Excitations}
+In quantum mechanics, an excitation describes the transition of a particle, such as an electron, from a lower-energy orbital to a higher-energy state. Within the context of computational many-body physics, these phenomena can manipulate the quantum state of the system. Implementing and evaluating these operations efficiently is the primary objective of the simulator.
+
+We saw before that fermions differ from qubits, also in the defintion of the excitation of the both particle groups differences can be seen. In both cases, excitations are enacted via unitary evolution operators; however, the explicit construction of the underlying mathematical generators must be changed to obey the respective commutation or anticommutation rules of the system. This is detailed in this section.
 
 
 % ==========================================
@@ -278,6 +307,7 @@ This concept naturally extends to higher-order excitations. Given a set of targe
     \label{eq:mult_qu_exc_generator}
     G^{\boldsymbol{k}}_{\boldsymbol{l}} = i\left(\prod_n \hat{\sigma}^-_{k_n} \prod_m \hat{\sigma}^+_{l_m} - \text{h.c.} \right).
 \end{equation}
+% Todo reference
 
 % ==========================================
 % Subsection: Fermionic Excitations
