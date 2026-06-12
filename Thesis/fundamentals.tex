@@ -28,16 +28,16 @@ Its corresponding dual state, denoted by the bra $\bra{\psi}$, is represented by
     \langle\psi| \doteq \vec{\psi}^\dagger =
     \begin{pmatrix}
         c_1^* & c_2^* & \dots & c_n^*
-    \end{pmatrix}
+    \end{pmatrix}.
 \end{equation}
-\cite[p.16f.]{Kottmann2025}
-\cite[p. 10f.]{sakurai2020modern}.
+
 
 To ensure consistency with the probability interpretation, quantum states must be normalized to unity. Therefore, for a quantum state $\ket{\psi}$, the sum of the absolute squares of its probability amplitudes must equal to one:
 \begin{equation}
-    \abs{c_1}^2 +\abs{c_2}^2 + \dots + \abs{c_n}^2 = 1
+    \abs{c_1}^2 +\abs{c_2}^2 + \dots + \abs{c_n}^2 = 1.
 \end{equation}
-\cite[p.5]{Kottmann2025}.
+\cite[chapter 1.1, 2.1]{Kottmann2025}
+\cite[chapter 1.2.1]{sakurai2020modern}
 
 
 % ==========================================
@@ -49,7 +49,7 @@ In quantum mechanics, multi-particle systems are constructed within a composite 
 
 Constructing a multi-qubit basis state is achieved by taking the tensor product of the individual single-qubit states. For instance, if one qubit is in the state $\ket{0}$ and a second is in the state $\ket{1}$, the joint state of the two-qubit system is $\ket{0} \otimes \ket{1}$, which is conventionally abbreviated as $\ket{01}$. Because quantum systems can exist in superposition, a general composite state is expressed as a linear combination of all possible tensor product basis states. For a two-qubit system, this yields a four-dimensional complex vector:
 \begin{equation}
-    \ket{\psi} = c_{00}\ket{00} + c_{01}\ket{01} + c_{10}\ket{10} + c_{11}\ket{11}
+    \ket{\psi} = c_{00}\ket{00} + c_{01}\ket{01} + c_{10}\ket{10} + c_{11}\ket{11}.
 \end{equation}
 
 The tensor product formalism also provides a definition of entanglement. A multi-particle state is defined as entangled if it cannot be factored into a simple tensor product of individual, single-particle states (i.e., $\ket{\psi} \neq \ket{\phi} \otimes \ket{\varphi}$).
@@ -84,9 +84,9 @@ An operator $X$ is defined as the \textbf{null operator} if, for any arbitrary k
 
 Operators can be added ($X + Y = Y + X$) and multiplied. While operator multiplication is generally noncommutative ($XY \neq YX$), it is strictly associative:
 \begin{equation}
-    X(YZ) = (XY)Z = XYZ
+    X(YZ) = (XY)Z = XYZ.
 \end{equation}
-\cite[p.11, 13-15]{sakurai2020modern}.
+
 
 Because quantum states are represented as vectors in $\mathbb{C}^n$, a linear operator can be represented by a complex $n \times n$ matrix $U$. Given an input ket $\ket{\psi}$, the resulting state $\ket{\phi}$ is calculated via matrix-vector multiplication:
 \begin{equation}
@@ -94,11 +94,10 @@ Because quantum states are represented as vectors in $\mathbb{C}^n$, a linear op
 \end{equation}
 
 Crucially, physical operations that evolve a quantum state must preserve its probability normalization. Consequently, physical evolution operators are restricted to unitary matrices, ensuring that the inner product—and thus the normalization—remains invariant
-\cite[p.19]{Kottmann2025}.
 
-An \textbf{observable} represents a physical quantity of a system that can be experimentally measured. Classical examples include position, momentum, angular momentum, and energy. In an $N$-qubit system, an observable is defined mathematically as a $2^N \times 2^N$ Hermitian matrix $H$. Because the operator is Hermitian, it guarantees that all possible measurement outcomes are strictly real numbers and correspond directly to the eigenvalues of $H$ \cite[p.16f.]{sakurai2020modern}, \cite[p.8]{schleich2025quantum}. Crucially, the act of measurement fundamentally alters the system: upon obtaining a specific eigenvalue, the quantum state instantaneously collapses into the corresponding eigenstate of that observable \cite[p.22]{sakurai2020modern}.
+An \textbf{observable} represents a physical quantity of a system that can be experimentally measured. Classical examples include position, momentum, angular momentum, and energy. In an $N$-qubit system, an observable is defined mathematically as a $2^N \times 2^N$ Hermitian matrix $H$. Because the operator is Hermitian, it guarantees that all possible measurement outcomes are strictly real numbers and correspond directly to the eigenvalues of $H$. Crucially, the act of measurement fundamentally alters the system: upon obtaining a specific eigenvalue, the quantum state instantaneously collapses into the corresponding eigenstate of that observable
 
-Due to the inherent probabilistic nature of quantum mechanics, we generally cannot predict the outcome of a single measurement with absolute certainty. Instead, we evaluate the \textbf{expectation value}, which represents the statistical average of measured values over a large ensemble of identically prepared systems \cite[p. 23]{sakurai2020modern}.
+Due to the inherent probabilistic nature of quantum mechanics, we generally cannot predict the outcome of a single measurement with absolute certainty. Instead, we evaluate the \textbf{expectation value}, which represents the statistical average of measured values over a large ensemble of identically prepared systems
 
 In the context of this thesis, the primary observables of interest are Hamiltonians, which represent the total energy of the physical system. Let $H$ be the Hamiltonian. We conventionally assume that its resulting energy eigenvalues are ordered from the ground state upwards ($E_0 \le E_1 \le E_2 \le \dots$), satisfying the eigenvalue equation:
 \begin{equation}
@@ -107,10 +106,11 @@ In the context of this thesis, the primary observables of interest are Hamiltoni
 
 Given a hamiltonian Operator $H$ and a quantum state $\ket{\psi}$ the expectation value can be calculated as:
 \begin{equation}
-    \langle H\rangle _{\psi} \coloneqq \bra{\psi} H \ket    {\psi}
+    \langle H\rangle _{\psi} \coloneqq \bra{\psi} H \ket    {\psi}.
 \end{equation}
-\cite[p.42]{Kottmann2025}
-
+\cite[chapter 2.2, 5.3]{Kottmann2025}
+\cite[chapter 1.2, 1.4.1]{sakurai2020modern}
+\cite[chapter 1.1.1]{schleich2025quantum}
 
 % ==========================================
 % Subsection: Unitary Operations and Generators
@@ -121,9 +121,10 @@ The physical transformations applied to quantum states are represented by unitar
     \label{unitary_operation}
     U(\theta) = e^{-i\frac{\theta}{2}G},
 \end{equation}
-where $\theta$ is a real-valued scalar parameter (such as a time or rotation angle), and $G$ is a Hermitian matrix ($G = G^\dagger$) known as the \textit{generator} of the operation.
-\cite[p.34, 39]{Kottmann2025}
-\cite[p.1]{kottmann2020feasible}
+where $\theta$ is a real-valued scalar parameter (such as a time or rotation angle), and $G$ is a Hermitian matrix ($G = G^\dagger$) known as the generator of the operation.
+\cite[chapter 1.2.12]{benito_kottmann_qc_2025}
+\cite[chapter II.]{kottmann2020feasible}
+
 
 
 % ==========================================
