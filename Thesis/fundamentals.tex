@@ -14,7 +14,7 @@ We begin by defining the mathematical representation of quantum states. To descr
 % ==========================================
 % Subsection: Quantum States
 % ==========================================
-\subsection{Quantum States}
+\subsection{Quantum States}\label{subsec:quantum-states}
 In an $n$-dimensional Hilbert space with a chosen orthonormal basis, a quantum state, denoted by the ket $\ket{\psi}$, can be represented as a $n$-dimensional complex column vector $\vec{\psi}$:
 \begin{equation}
     \ket{\psi} \doteq \vec{\psi} =
@@ -43,7 +43,7 @@ To ensure consistency with the probability interpretation, quantum states must b
 % ==========================================
 % Subsection: Tensor Product
 % ==========================================
-\subsection{Tensor Products}
+\subsection{Tensor Products}\label{subsec:tensor-products}
 % multi-particle system's are constructed in Hilbert space using tensor products (maybe)
 In quantum mechanics, multi-particle systems are constructed within a composite Hilbert space using tensor products. The tensor product combines two or more distinct vector spaces into a single, larger space. Mathematically, if we consider a vector space of dimension $d_1$ and a second vector space of dimension $d_2$, the resulting composite space has a dimension of $d_1 \cdot d_2$ (i.e., $\mathbb{C}^{d_1} \otimes \mathbb{C}^{d_2} \rightarrow \mathbb{C}^{d_1 \cdot d_2}$).
 
@@ -239,7 +239,7 @@ This chrectersitc is needed to preserve wavefunction antisymmetry and enforce th
 % ==========================================
 % Subsection: The Jordan-Wigner Transformation
 % ==========================================
-\subsection{The Jordan-Wigner Transformation}
+\subsection{The Jordan-Wigner Transformation}\label{subsec:the-jordan-wigner-transformation}
 To simulate fermionic systems on quantum hardware, an encoding scheme is required to map the physical particles to the computational framework. The Jordan-Wigner (JW) transformation serves as the foundational mechanism for this mapping, establishing a direct bijection between $N$ fermionic spin-orbitals and $N$ individual qubits. Within this framework, the computational basis states directly represent the Fock space occupation number vectors: a qubit in state $\ket{1}$ denotes an occupied spin-orbital, while $\ket{0}$ denotes an empty one.
 
 However, preserving the indistinguishability of fermions presents a significant hardware constraint. Fermionic creation and annihilation operators are mathematically constrained to strictly anticommute to guarantee that the many-particle wavefunction remains totally antisymmetric under particle exchange. Because quantum hardware utilizes distinguishable qubits whose operators naturally commute, fermionic operators cannot be mapped to single qubits in a simple one-to-one fashion. Instead, they must be explicitly constructed from composite qubit operators.
@@ -273,14 +273,7 @@ When evaluated against a quantum state, these non-local parity strings ($\hat{\s
 % Section: Simulating Excitations
 % ==========================================
 \section{Simulating Excitations}
-An excitation in the quantum mechanic describes the transition of a particle such as an electron from a lower energy orbital to a higher energy orbital. We can use this phänomena to move particles between the orbitals and therefore manipulate our current state of the system. This is gonna be our goal to achieve in our simulator.
-
-Because this principle works different depending on if the system we work with is a qubit or a fermionic one, we gonna discuss the differences in this section. In general we use for both excitations a rotation operator and change the Generator of each one.
-
-% ==========================================
-% ==========================================
-\section{Simulating Excitations}
-In quantum mechanics, an excitation describes the transition of a particle, such as an electron, from a lower-energy orbital to a higher-energy state. Within the context of computational many-body physics, these phenomena can manipulate the quantum state of the system. Implementing and evaluating these operations efficiently is the primary objective of the simulator.
+In quantum mechanics, an excitation describes the transition of a particle, such as an electron, from a lower-energy orbital to a higher-energy state. Within the context of computational many-body physics, these phenomena can manipulate the quantum state of the system.
 
 We saw before that fermions differ from qubits, also in the defintion of the excitation of the both particle groups differences can be seen. In both cases, excitations are enacted via unitary evolution operators; however, the explicit construction of the underlying mathematical generators must be changed to obey the respective commutation or anticommutation rules of the system. This is detailed in this section.
 
