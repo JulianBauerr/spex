@@ -30,17 +30,20 @@ Motivation, problem statement, goal of the thesis
 
 ---
 
-## 3. Algorithmic Design of the Matrix-Free Simulator
+# 3. Algorithmic Design of the Simulator
 no C++ syntax)
 
-### 3.2 Direct State Evolution
-- Bypass full matrix exponentiation $U = \exp(\sum \theta \hat{E})$
-- Restrict operations strictly to the affected 2D subspace (affected bits)
-- Apply amplitude updates using analytical evaluations: $\cos(\theta/2)$ and $\sin(\theta/2)$
-### 3.3 Enforcing Fermionic Statistics (Phase Algorithm)
-- Algorithm to calculate Jordan-Wigner Z-string (parity)
-- Count occupied states between target indices
-- Trigger phase flips based on count (logic for `phase = -phase`)
+## 3.2 Matrix-Free Direct State Evolution
+1. take the next basis state |𝒊⟩ in the quantum state
+2. if |𝒊⟩ is in the nullspace of 𝐺: continue with 1. and take the next basis state
+3. compute phase 
+4. update the amplitude $c_i \rightarrow c_i \cos(\frac{\theta}{2})$
+5. compute the partner state $c|i'\rangle = -iG |{i}\rangle$
+6. update the partner amplitude $c_{i'} \rightarrow c_{i'}+c \sin({\frac{\theta}{2}})$
+### Qubit Baseline
+### Incorporating the Fermionic Phase
+### Bitwise Representation and Algorithmic Mapping
+maybe explain the optimizations (Xor, bitwise operatiosn etc) before starting with the C++ code.gener 
 
 ---
 
@@ -54,6 +57,7 @@ no C++ syntax)
 - Apply `(1ULL << idx)` for bit masking
 - Use `^` for flipping bits (creation/annihilation logic)
 - Leverage `__builtin_popcountll()` for hardware-accelerated set-bit counting ( speed-up for fermionic phase calculations)
+- Sparse Iteration (for (const auto& [basis_state, coeff] : state))
 ### 4.3 Subspace Filtering (Optimization)
 - Breakdown of "skip" logic (checking P0)
 - Explain how bypassing unaffected basis states skips unnecessary math and saves compute time
