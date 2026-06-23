@@ -2,15 +2,73 @@
 \label{c:implementation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ==========================================
+% Section: Core Data Structures
+% ==========================================
+\section{Core Data Structures}
+To construct the foundation of the simulator, we must first define the core data structures that map the mathematical framework into efficient computational memory.
 
+% ==========================================
+% Section: Defining the state
+% ==========================================
+\subsection{Defining the state}
+As established in Sections~\ref{subsec:quantum-states} and~\ref{subsec:tensor-products}, a quantum state is represented as a linear combination of orthogonal basis states $\ket{i}$ and their corresponding complex probability amplitudes $c_i$. Computationally, simulating these many-body states requires a data structure optimized for rapid access and modification. This is particularly crucial because, during generator-based evolution, the algorithm must dynamically retrieve and manipulate specific pairs of interacting basis states.
 
+To represent the fermionic Fock states, we use the occupation number representation defined in Equation \eqref{eq:occupation_number_representation}. Because fermions obey the Pauli exclusion principle, a given orbital is either strictly empty or occupied. This binary nature maps perfectly to a bitstring. In C++, this is naturally and efficiently encoded as an unsigned 64-bit integer (\texttt{uint64\_t}). Utilizing native integer types allows the simulator to execute optimized, hardware-level bitwise operations when applying creation and annihilation operators. For the associated probability amplitudes, we utilize the standard library's double-precision complex type, \texttt{std::complex<double>}, ensuring robust numerical stability during phase accumulations.
 
-\begin{outline}
-	\1 Explanation
-	\1 Decision on implementation
-	\1 Software architecture
-	\1 Effizienz strategy:
-		\2 Why C++ (Memory management, Speed, etc.)
-		\2 Data structures
-    	\2 Optimization of the loop
-\end{outline}
+To bind the basis states to their amplitudes, we require a structure that supports dynamic sizing and fast lookups. Rather than relying on dense arrays—which would scale exponentially and store unnecessary zero-amplitude states—we implement a sparse representation using a hash map. Specifically, we utilize the \texttt{ankerl::unordered\_dense::map}. Unlike the standard \texttt{std::unordered\_map}, this optimized library provides a cache-friendly, contiguous memory layout.
+
+Combining these architectural choices, the complete quantum state is elegantly defined via a single type alias:
+
+\begin{minted}{cpp}
+    using State = ankerl::unordered_dense::map<uint64_t, std::complex<double>>;
+\end{minted}
+
+% ==========================================
+% Section: Excitations
+% ==========================================
+\section{Excitations}
+Building upon the core state representation, we now address the application of excitation operators. We first examine the simplified qubit excitation baseline before introducing the necessary fermionic modifications.
+
+% ==========================================
+% Subsection: Qubit Baseline
+% ==========================================
+\subsection{Qubit Baseline}
+As discussed in Section~\ref{subsec:qubit-baseline}, implementing the qubit excitation requires several key parameters: the initial quantum state, the orbital sets $\boldsymbol{k}$ and $\boldsymbol{l}$ (which define the electron transitions), and the rotation angle $\theta$.
+
+Computationally, the orbital sets are passed as constant references to standard integer vectors (\texttt{std::vector<int>}) to avoid unnecessary memory allocations, while the angle $\theta$ is provided as a double-precision float. This results in the following function signature:
+
+\begin{minted}{cpp}
+State apply_qubit_excitation(const State& state, const std::vector<int>& k, const std::vector<int>& l, const double theta)
+\end{minted}
+
+The core algorithm must iterate over all non-zero basis states and apply the unitary transformation defined in Equation \eqref{eq:qubit-excitation-unitary-transformation-configuration-differences}:
+
+\begin{equation} \tag{\ref{eq:qubit-excitation-unitary-transformation-configuration-differences}}
+    \qubitExcitationUnitaryTransformationConfigurationDifferences
+\end{equation}
+
+To iterate efficiently over the sparse state map, we utilize C++17 structured bindings alongside the \texttt{auto} keyword. This modern language feature allows direct, reference-based extraction of the basis state and its corresponding amplitude without invoking costly data copying:
+
+\begin{minted}{cpp}
+    for (const auto& [basis_state, coeff] : state)
+\end{minted}
+
+Before performing any computationally expensive floating-point arithmetic or creating new state entries, the simulator evaluates the nullspace projector $P_0$. A basis state belongs to the active space (avoiding the nullspace) if and only if all origin orbitals $\boldsymbol{k}$ are uniformly occupied while all target orbitals $\boldsymbol{l}$ are uniformly unoccupied, or vice versa.
+
+Because the basis state is elegantly encoded as a \texttt{uint64\_t}, we can evaluate this physical condition using raw hardware-level bitwise operations. Bit shifting (\texttt{>>}) and masking (\texttt{\& 1ULL}) execute in a single CPU cycle. By looping over the orbital indices, the algorithm can aggressively prune nullspace states with virtually zero computational overhead:
+
+\begin{minted}{cpp}
+    bool k_val = (basis_state >> k[0]) & 1ULL;
+    bool skip = false;
+    for (size_t i = 0; i < k.size(); i++) {
+        if (((basis_state >> k[i]) & 1ULL) != k_val) skip = true;
+        if (((basis_state >> l[i]) & 1ULL) == k_val) skip = true;
+    }
+\end{minted}
+
+We now know that the basis state is in the active space so we can perform the calculations of the excitation. We again already discussed in section~\ref{subsec:qubit-baseline} how the phases needed to get updated. Which we can easily apply in C++. First the phase of the basis state gets updated as in equation \eqref{eq:qubit-excitation-update-basis-state}:
+\begin{equation} \tag{\eqref{eq:qubit-excitation-update-basis-state}}
+    c_{\boldsymbol{i}} \leftarrow c_{\boldsymbol{i}} \cos\left(\frac{\theta}{2}\right)
+\end{equation}
+

@@ -160,7 +160,7 @@ In many-body quantum mechanics, systems of identical particles are tightly const
 % Subsection: Pauli Exclusion Principle
 % ==========================================
 \subsection{Pauli Exclusion Principle}
-The Pauli Exclusion Principle, formulated by Wolfgang Pauli in 1925, is a direct physical consequence of the indistinguishability applied specifically to fermions. It establishes that no two identical fermions can simultaneously occupy the exact same quantum state within a given system. Originally conceptualized to explain atomic electron configurations, where no two electrons can share the same four quantum numbers, this principle is a defining, non-negotiable characteristic of fermionic behavior. This exclusion must be preserved. Any application of creation ($a_i^\dagger$) or annihilation ($a_i$) operators must naturally prevent multiple occupancies. \cite[chapter 7.1, 7.2]{sakurai2020modern}
+The Pauli Exclusion Principle, formulated by Wolfgang Pauli in 1925, is a direct physical consequence of the indistinguishability applied specifically to fermions. It establishes that no two identical fermions can simultaneously occupy the exact same quantum state within a given system. Originally conceptualized to explain atomic electron configurations, where no two electrons can share the same four quantum numbers, this principle is a defining, characteristic of fermionic behavior. This exclusion must be preserved. Any application of creation ($a_i^\dagger$) or annihilation ($a_i$) operators must naturally prevent multiple occupancies. \cite[chapter 7.1, 7.2]{sakurai2020modern}
 
 % ==========================================
 % Section: The Second Quantization Framework
@@ -180,7 +180,7 @@ To mathematically formalize the second quantization framework, we require a stat
 
 Because this space utilizes the second quantization formalism, it does not track the explicit spatial coordinates of each particle. Instead, states in the Fock space are expressed using the occupation number representation:
 \begin{equation}
-    \ket{\psi} = \ket{n_1, n_2, \dots, n_i, \dots}.
+    \ket{\psi} = \ket{n_1, n_2, \dots, n_i, \dots}.\label{eq:occupation_number_representation}
 \end{equation}
 In this notation, each index $i$ corresponds to a specific single-particle state (or spin-orbital), and $n_i$ denotes its respective occupation number. Note that due to the Pauli exclusion principle, the occupation number for fermions is strictly restricted to $n_i \in \{0, 1\}$.
 

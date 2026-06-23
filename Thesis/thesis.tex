@@ -13,6 +13,8 @@
 \usepackage{physics}
 \usepackage{amssymb}
 \usepackage{mathtools}
+\usepackage[outputdir=../out]{minted}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -27,15 +29,22 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % If you need additional commands, this is the right place to define them
+\setminted[cpp]{
+  breaklines=true,      % <--- This turns on your line-wrapping!
+  linenos=true,         % Puts line numbers on the left
+  framesep=2mm,
+  baselinestretch=1.1,
+  fontsize=\footnotesize
+}
+\newcommand{\qubitExcitationUnitaryTransformationConfigurationDifferences}{
+  U(\theta) \ket{\Phi} = \begin{cases} \ket{\Phi}, & \text{if } P_0\ket{\Phi} = \ket{\Phi} \\ \left(\cos\left(\frac{\theta}{2}\right) I - i\sin\left(\frac{\theta}{2}\right)G\right)\ket{\Phi}, & \text{else.} \end{cases}
+}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Acronyms
 
-\DeclareAcronym{os}{	
-  short = OS,
-  long = operating system
-}
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

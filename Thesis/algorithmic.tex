@@ -11,7 +11,7 @@ The core computational challenge in simulating many-body quantum systems lies in
 
 To translate this theoretical framework into a high-performance algorithmic routine, we must deconstruct the evaluation of the unitary operation defined in Equation \eqref{unitary_operation}. As an initial step, we isolate the fundamental mechanics by considering the qubit excitation framework. This isolated model provides a computational baseline that is then subsequently generalized to incorporate fermionic anticommutation relations.
 
-\subsection{Qubit Baseline}
+\subsection{Qubit Baseline}\label{subsec:qubit-baseline}
 Rather than relying on computationally prohibitive full matrix exponentiation to evaluate the time-evolution operator $U = \exp(\sum \theta \hat{E})$, the direct state evolution approach exploits the algebraic properties of the generator to execute localized state updates. To compute the excitation efficiently, we must simplify the evaluation of the unitary operation defined in Equation \eqref{unitary_operation}. As an initial simplification, we consider the qubit excitation framework, which can later be generalized to account for fermionic differences. 
 
 Consider an initial quantum state upon which the excitation is applied. Recalling the generalized generator from Equation \eqref{eq:mult_qu_exc_generator}, the operation is fully defined by the orbital sets $\boldsymbol{k}$ and $\boldsymbol{l}$, expressing which electrons are exchanged. With these target orbitals and the initial state, the algorithm possesses all the necessary parameters. Given the generator $G^{\boldsymbol{k}}_{\boldsymbol{l}}$, the unitary operator can be expanded as:
@@ -21,13 +21,13 @@ Consider an initial quantum state upon which the excitation is applied. Recallin
 Here, $P_0$ represents the projector onto the nullspace of the generator $G^{\boldsymbol{k}}_{\boldsymbol{l}}$. This nullspace is spanned by all computational basis states $\ket{\boldsymbol{i}}$ for which $G^{\boldsymbol{k}}_{\boldsymbol{l}} \ket{\boldsymbol{i}} = 0$.
 
 When applied to a specific electronic configuration $\ket{\Phi}$, the unitary transformation acts trivially (as the identity operator) if the configuration resides within the nullspace of the generator. Otherwise, it induces a rotation between the original configuration and the $n$-fold excited configuration:
-\begin{equation}
-	U(\theta) \ket{\Phi} = \begin{cases} \ket{\Phi}, & \text{if } P_0\ket{\Phi} = \ket{\Phi} \\ \left(\cos\left(\frac{\theta}{2}\right) I - i\sin\left(\frac{\theta}{2}\right)G\right)\ket{\Phi}, & \text{else.} \end{cases}
+\begin{equation} \label{eq:qubit-excitation-unitary-transformation-configuration-differences}
+	\qubitExcitationUnitaryTransformationConfigurationDifferences
 \end{equation}
 
 To implement the active transformation algorithmically, we examine the two components of the rotational term. The first term, governed by $\cos\left(\frac{\theta}{2}\right) I$, is computationally straightforward. It is expressed as a direct scaling of the initial state's probability amplitude, which can be expressed algorithmically as an update:
 \begin{equation}
-	c_{\boldsymbol{i}} \leftarrow c_{\boldsymbol{i}} \cos\left(\frac{\theta}{2}\right).
+	c_{\boldsymbol{i}} \leftarrow c_{\boldsymbol{i}} \cos\left(\frac{\theta}{2}\right).\label{eq:qubit-excitation-update-basis-state}
 \end{equation}
 
 The second component of the rotation governs the coupling and is more complex as it involves the explicit action of the generator. The term $-i\sin\left(\frac{\theta}{2}\right)G^{\boldsymbol{k}}_{\boldsymbol{l}}$ can be decomposed into two distinct operational steps. First, the algorithm computes the partner state $\ket{\boldsymbol{i'}}$ resulting from the generator's application onto the basis state:
@@ -47,15 +47,16 @@ Finally, this term induces an amplitude update on the newly acquired partner sta
 % Subsection: Incorporating the Fermionic Phase
 % ==========================================
 \subsection{Incorporating the Fermionic Phase}
+
 While the foundational baseline algorithm effectively handles qubit-based rotations, it is inherently insufficient for simulating the characteristics of true fermionic many-body systems. To accurately model fermions, the computational routine must replace the qubit excitation generator with its fermionic counterpart, the multi-excitation generator $G_{\boldsymbol{pq}}$, as defined in Equation \eqref{eq:mult_fe_exc_generator}.
 
-As established in Section \ref{subsec:the-jordan-wigner-transformation}, fermionic creation and annihilation operators can be mapped to qubit representations via the Jordan-Wigner transformation. This mapping explicitly reveals the computational difference between the two algorithmic frameworks. While isolated qubit excitations can be described using standard ladder operators ($\hat{\sigma}^\pm$), fermionic operators require the additional application of a parity string ($\hat{\sigma}^{\otimes(N-k)}_z$). This parity string is a tensor product of Pauli-Z operators spanning all intermediate qubits located between the target orbitals of the excitation.
+As established in Section \ref{subsec:the-jordan-wigner-transformation}, fermionic creation and annihilation operators are conventionally mapped to qubit representations via the Jordan-Wigner transformation. On physical quantum hardware, capturing these fermionic statistics requires the explicit application of a parity string ($\hat{\sigma}^{\otimes(N-k)}_z$)—a tensor product of Pauli-Z operators spanning all intermediate qubits between the target orbitals. However, within our classical simulation framework, we can exploit direct access to the underlying state vector. Rather than explicitly applying costly Pauli matrices, the architecture computes the parity of the occupations between the relevant orbitals algebraically.
 
-When acting upon the computational basis, these intermediate Pauli-Z operators return an eigenvalue of $+1$ if an orbital is empty ($\ket{0}$) and $-1$ if it is occupied ($\ket{1}$). Consequently, the parity string algorithmically counts the number of occupied orbitals located between the origin and destination of the electron jump. If the intermediate occupation is even, the $-1$ eigenvalues perfectly cancel, multiplying the overall state by a global $+1$ (resulting in no phase shift). Conversely, if the intermediate occupation is odd, the $-1$ eigenvalues do not cancel, and a net $-1$ phase is applied to the quantum state amplitude.
+When acting upon the computational basis, each intermediate occupied orbital ($\ket{1}$) logically contributes a $-1$ phase, while empty orbitals ($\ket{0}$) contribute a $+1$ phase. Consequently, our algorithm simply counts the number of occupied orbitals strictly located between the origin and destination of the electron jump. If the intermediate occupation count is even, the $-1$ eigenvalues perfectly cancel, resulting in a global $+1$ multiplier (no phase shift). Conversely, if the intermediate occupation is odd, a net $-1$ phase is applied to the quantum state amplitude.
 
-This fundamental difference in dynamic behavior originates from the Pauli exclusion principle and the strict antisymmetry required of fermionic wavefunctions. Algorithmically, it is crucial to note that while the nullspace projector $P_0$ acts purely based on the occupancy of the initial and target orbitals and ignores phase dynamics complety. Therefore the correct evaluation of the active state rotation relies entirely on accurately tracking and applying this parity phase.
+This fundamental difference in dynamic behavior enforces the strict antisymmetry required of fermionic wavefunctions, originating from the Pauli exclusion principle. Algorithmically, it can be recognized that the nullspace projector $P_0$ acts purely based on the occupancy of the initial and target orbitals, ignoring intermediate phase dynamics. Therefore, the correct evaluation of the active state rotation relies entirely on accurately tracking and applying this classically computed parity phase.
 
-Note: The switch from qubit to fermionic on quantum Hardware is because of the Parity String very complex. To apply the long chain of Pauli-Z operators the quantum circuit requires many deep CNOT ``ladders´´. (read more about it in \cite[chapter III.B]{anand2022quantum})
+Finally, note that the distinct computational advantage of this classical approach. Implementing the fermionic phase switch on physical quantum hardware is notoriously complex; applying long chains of Pauli-Z operators requires deep CNOT ladders, which introduce significant gate overhead and noise. By determining the phase algebraically through direct state occupation counting, our simulator bypasses this physical bottleneck.
 
 \cite[chapter III.B]{anand2022quantum}
 \cite[chapter 2.1.1]{schleich2025quantum}
