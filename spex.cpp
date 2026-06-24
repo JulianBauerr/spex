@@ -22,6 +22,8 @@ namespace py = pybind11;
 // Type definition for the quantum state
 using State = ankerl::unordered_dense::map<uint64_t, std::complex<double>>;
 
+constexpr double FERMION_EXCITATION_CLEANUP_TOL = 1e-12;
+
 /**
  * Structure to represent an exponential Pauli term like "X(0)Y(1)Z(2)" and an angle θ.
  */
@@ -425,6 +427,11 @@ State apply_qubit_excitation(const State& state, const std::vector<int>& k,
             new_state[new_basis_state] += c * std::sin(theta/2) * coeff;
         }
     }
+    // Prune tiny residual amplitudes introduced by floating point arithmetic
+    for (auto it = new_state.begin(); it != new_state.end(); ) {
+        if (std::abs(it->second) < FERMION_EXCITATION_CLEANUP_TOL) it = new_state.erase(it);
+        else ++it;
+    }
     return new_state;
 }
 
@@ -487,6 +494,11 @@ State apply_fermion_excitation(const State& state, const std::vector<int>& k,
             new_state[basis_state] += coeff * (std::cos(theta / 2) - 1.0);
             new_state[new_basis_state] += c * phase * std::sin(theta / 2) * coeff;
         }
+    }
+    // Prune tiny residual amplitudes introduced by floating point arithmetic
+    for (auto it = new_state.begin(); it != new_state.end(); ) {
+        if (std::abs(it->second) < FERMION_EXCITATION_CLEANUP_TOL) it = new_state.erase(it);
+        else ++it;
     }
     return new_state;
 }
