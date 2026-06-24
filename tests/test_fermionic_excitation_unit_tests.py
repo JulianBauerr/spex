@@ -5,8 +5,8 @@ import unittest
 import spex_tequila as spex
 
 S2 = 1.0 / math.sqrt(2.0)  # ~0.7071067811865476
-PI_2 = -math.pi / 2.0
-PI = -math.pi
+PI_2 = math.pi / 2.0
+PI = math.pi
 
 
 def fock(*orbitals):
@@ -76,7 +76,7 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
             {fock(0): 1.0}, [0], [1], PI_2
         )
         self.assertStateDictsAlmostEqual(
-            res, {fock(0): S2, fock(1): S2}  # {1: S2, 2: S2}
+            res, {fock(0): S2, fock(1): -S2}
         )
 
     def test_single_excitation_full_transfer(self):
@@ -85,7 +85,7 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
             {fock(0): 1.0}, [0], [1], PI
         )
         self.assertStateDictsAlmostEqual(
-            res, {fock(1): 1.0}  # {2: 1.0}
+            res, {fock(1): -1.0}
         )
 
     def test_single_deexcitation(self):
@@ -93,7 +93,7 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
         res = spex.apply_fermion_excitation(
             {fock(1): 1.0}, [0], [1], -PI_2
         )
-        self.assertStateDictsAlmostEqual(res, {fock(1): S2, fock(0): S2})
+        self.assertStateDictsAlmostEqual(res, {fock(1): S2, fock(0): -S2})
 
     # GROUP 3: Parity (JW)
 
@@ -102,7 +102,7 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
         res = spex.apply_fermion_excitation(
             {fock(0): 1.0}, [0], [2], PI_2
         )
-        self.assertStateDictsAlmostEqual(res, {fock(0): S2, fock(2): S2})
+        self.assertStateDictsAlmostEqual(res, {fock(0): S2, fock(2): -S2})
 
     def test_parity_long_jump_over_occupied_orbital(self):
         # 0 -> 2 over occupied 1 (parity -)
@@ -110,7 +110,7 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
             {fock(0, 1): 1.0}, [0], [2], PI_2
         )
         self.assertStateDictsAlmostEqual(
-            res, {fock(0, 1): S2, fock(1, 2): -S2}  # {3: S2, 6: -S2}
+            res, {fock(0, 1): S2, fock(1, 2): S2}
         )
 
     # GROUP 4: Double excitations
@@ -121,7 +121,7 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
             {fock(0, 1): 1.0}, [0, 1], [2, 3], PI_2
         )
         self.assertStateDictsAlmostEqual(
-            res, {fock(0, 1): S2, fock(2, 3): -S2}  # {3: S2, 12: S2}
+            res, {fock(0, 1): S2, fock(2, 3): S2}
         )
 
     def test_double_excitation_parity_trap(self):
@@ -130,7 +130,7 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
             {fock(0, 1, 3): 1.0}, [0, 1], [2, 4], PI_2
         )
         self.assertStateDictsAlmostEqual(
-            res, {fock(0, 1, 3): S2, fock(2, 3, 4): S2}
+            res, {fock(0, 1, 3): S2, fock(2, 3, 4): -S2}
         )
 
     # GROUP 5: Superposition & interference
@@ -141,7 +141,7 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
         res = spex.apply_fermion_excitation(
             initial, [0], [2], PI
         )
-        self.assertStateDictsAlmostEqual(res, {fock(2): 0.8, fock(1): 0.6})
+        self.assertStateDictsAlmostEqual(res, {fock(2): -0.8, fock(1): 0.6})
 
     def test_destructive_quantum_interference(self):
         # (|01>+|10>)/√2, rotate 0->1 -> |10>
@@ -149,14 +149,14 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
         res = spex.apply_fermion_excitation(
             initial, [0], [1], PI_2
         )
-        self.assertStateDictsAlmostEqual(res, {fock(1): 1.0})
+        self.assertStateDictsAlmostEqual(res, {fock(0): 1.0})
 
     # GROUP 6: Complex amplitudes
 
     def test_complex_phase_preservation(self):
         res = spex.apply_fermion_excitation({fock(0): 1.0j}, [0], [1], PI_2)
         self.assertStateDictsAlmostEqual(
-            res, {fock(0): S2 * 1.0j, fock(1): S2 * 1.0j}
+            res, {fock(0): S2 * 1.0j, fock(1): -S2 * 1.0j}
         )
 
     def test_complex_interference(self):
@@ -165,7 +165,7 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
             initial, [0], [1], PI_2
         )
         self.assertStateDictsAlmostEqual(
-            res, {fock(0): (0.5 - 0.5j), fock(1): (0.5 + 0.5j)}
+            res, {fock(0): (0.5 + 0.5j), fock(1): (-0.5 + 0.5j)}
         )
 
 
