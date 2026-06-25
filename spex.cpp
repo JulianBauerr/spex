@@ -405,7 +405,8 @@ State apply_qubit_excitation(const State& state, const std::vector<int>& k,
     // Checks
 
     // Initials
-    State new_state = state;
+    State new_state;
+    new_state.reserve(state.size() * 2);
     // Loop through state
     for (const auto& [basis_state, coeff] : state) {
         // Check for P0
@@ -415,16 +416,21 @@ State apply_qubit_excitation(const State& state, const std::vector<int>& k,
             if (((basis_state >> k[i]) & 1ULL) != k_val) skip = true;
             if (((basis_state >> l[i]) & 1ULL) == k_val) skip = true;
         }
-        if (!skip) {
+        if (skip) {
+            new_state[basis_state] += coeff;
+        } else {
             // Implement excitation
-            new_state[basis_state] = coeff * std::cos(theta / 2);
-            uint64_t new_basis_state = basis_state;
+            std::complex<double> c_ibs = coeff * std::cos(theta / 2);
+            uint64_t partner_basis_state = basis_state;
             for (int i = 0; i < k.size(); i++) {
-                new_basis_state ^= (1ULL << k[i]);
-                new_basis_state ^= (1ULL << l[i]);
+                partner_basis_state ^= (1ULL << k[i]);
+                partner_basis_state ^= (1ULL << l[i]);
             }
             int c = (basis_state >> k[0]) & 1ULL ? 1 : -1;
-            new_state[new_basis_state] += c * std::sin(theta/2) * coeff;
+            std::complex<double> c_ipbs = c * std::sin(theta/2) * coeff;
+
+            new_state[basis_state] += c_ibs;
+            new_state[partner_basis_state] += c_ipbs;
         }
     }
     // Prune tiny residual amplitudes introduced by floating point arithmetic
@@ -441,7 +447,8 @@ State apply_fermion_excitation(const State& state, const std::vector<int>& k,
     // Checks
 
     // Initials
-    State new_state = state;
+    State new_state;
+    new_state.reserve(state.size() * 2);
     // Loop through state
     for (const auto& [basis_state, coeff] : state) {
         // Check for P0
@@ -451,7 +458,9 @@ State apply_fermion_excitation(const State& state, const std::vector<int>& k,
             if (((basis_state >> k[i]) & 1ULL) != k_val) skip = true;
             if (((basis_state >> l[i]) & 1ULL) == k_val) skip = true;
         }
-        if (!skip) {
+        if (skip) {
+            new_state[basis_state] += coeff;
+        } else {
             // Compute the phase
             int phase = 1;
             uint64_t temp_state = basis_state;
@@ -491,8 +500,12 @@ State apply_fermion_excitation(const State& state, const std::vector<int>& k,
             int c = (k_val == 1) ? -1 : 1;
 
             // update amplitudes
-            new_state[basis_state] += coeff * (std::cos(theta / 2) - 1.0);
+            // we previously started from a copy of `state` and therefore
+            // added coeff*(cos(theta/2)-1) to produce coeff*cos(theta/2).
+            // Now that `new_state` is empty, directly add coeff*cos(theta/2).
+            new_state[basis_state] += coeff * std::cos(theta / 2);
             new_state[new_basis_state] += c * phase * std::sin(theta / 2) * coeff;
+
         }
     }
     // Prune tiny residual amplitudes introduced by floating point arithmetic
