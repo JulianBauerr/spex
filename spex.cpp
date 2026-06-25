@@ -502,10 +502,8 @@ State apply_fermion_excitation(const State& state, const std::vector<int>& k,
             // update amplitudes
             // we previously started from a copy of `state` and therefore
             // added coeff*(cos(theta/2)-1) to produce coeff*cos(theta/2).
-            // Now that `new_state` is empty, directly add coeff*cos(theta/2).
             new_state[basis_state] += coeff * std::cos(theta / 2);
             new_state[new_basis_state] += c * phase * std::sin(theta / 2) * coeff;
-
         }
     }
     // Prune tiny residual amplitudes introduced by floating point arithmetic
