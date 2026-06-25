@@ -34,29 +34,29 @@ Building upon the core state representation, we now address the application of e
 % Subsection: Qubit Baseline
 % ==========================================
 \subsection{Qubit Baseline}
-As discussed in Section~\ref{subsec:qubit-baseline}, implementing the qubit excitation requires several key parameters: the initial quantum state, the orbital sets $\boldsymbol{k}$ and $\boldsymbol{l}$ (which define the electron transitions), and the rotation angle $\theta$.
+As discussed in Section~\ref{subsec:qubit-baseline}, implementing the qubit excitation requires three key parameters: the initial quantum state, the orbital sets $\boldsymbol{k}$ and $\boldsymbol{l}$ (which define the electron transitions), and the rotation angle $\theta$.
 
-Computationally, the orbital sets are passed as constant references to standard integer vectors (\texttt{std::vector<int>}) to avoid unnecessary memory allocations, while the angle $\theta$ is provided as a double-precision float. This results in the following function signature:
+To avoid unnecessary memory allocations, the orbital sets are passed as constant references to standard integer vectors (\texttt{std::vector<int>}), while the angle $\theta$ is provided as a double-precision float. This yields the following function signature:
 
 \begin{minted}{cpp}
 State apply_qubit_excitation(const State& state, const std::vector<int>& k, const std::vector<int>& l, const double theta)
 \end{minted}
 
-The core algorithm must iterate over all non-zero basis states and apply the unitary transformation defined in Equation \eqref{eq:qubit-excitation-unitary-transformation-configuration-differences}:
+Memory for the \texttt{new\_state} map is preallocated to establish a baseline capacity, minimizing dynamic reallocations when inserting known basis states and their phase factors. If an excitation generates a previously unseen partner state that exceeds this capacity, the underlying C++ container dynamically allocates the required memory. The core algorithm then iterates over all non-zero basis states, applying the unitary transformation defined in Equation \eqref{eq:qubit-excitation-unitary-transformation-configuration-differences}:
 
 \begin{equation} \tag{\ref{eq:qubit-excitation-unitary-transformation-configuration-differences}}
     \qubitExcitationUnitaryTransformationConfigurationDifferences
 \end{equation}
 
-To iterate efficiently over the sparse state map, we utilize C++17 structured bindings alongside the \texttt{auto} keyword. This modern language feature allows direct, reference-based extraction of the basis state and its corresponding amplitude without invoking costly data copying:
+To iterate efficiently over the sparse state map, the implementation uses structured bindings. This allows direct, reference-based extraction of the basis state and its corresponding amplitude without invoking costly memory copies:
 
 \begin{minted}{cpp}
     for (const auto& [basis_state, coeff] : state)
 \end{minted}
 
-Before performing any computationally expensive floating-point arithmetic or creating new state entries, the simulator evaluates the nullspace projector $P_0$. A basis state belongs to the active space (avoiding the nullspace) if and only if all origin orbitals $\boldsymbol{k}$ are uniformly occupied while all target orbitals $\boldsymbol{l}$ are uniformly unoccupied, or vice versa.
+Before performing floating-point arithmetic or allocating new state entries, the simulator evaluates the nullspace projector $P_0$. A basis state belongs to the active space if and only if all origin orbitals $\boldsymbol{k}$ are uniformly occupied while all target orbitals $\boldsymbol{l}$ are uniformly unoccupied, or vice versa.
 
-Because the basis state is elegantly encoded as a \texttt{uint64\_t}, we can evaluate this physical condition using raw hardware-level bitwise operations. Bit shifting (\texttt{>>}) and masking (\texttt{\& 1ULL}) execute in a single CPU cycle. By looping over the orbital indices, the algorithm can aggressively prune nullspace states with virtually zero computational overhead:
+Because the basis state is encoded as a \texttt{uint64\_t}, this physical condition is evaluated using raw hardware-level bitwise operations. Bit shifting (\texttt{>>}) and masking (\texttt{\& 1ULL}) execute in a single CPU cycle. Looping over the orbital indices allows the algorithm to skip nullspace states with minimal computational overhead:
 
 \begin{minted}{cpp}
     bool k_val = (basis_state >> k[0]) & 1ULL;
@@ -67,8 +67,101 @@ Because the basis state is elegantly encoded as a \texttt{uint64\_t}, we can eva
     }
 \end{minted}
 
-We now know that the basis state is in the active space so we can perform the calculations of the excitation. We again already discussed in section~\ref{subsec:qubit-baseline} how the phases needed to get updated. Which we can easily apply in C++. First the phase of the basis state gets updated as in equation \eqref{eq:qubit-excitation-update-basis-state}:
+States in the nullspace undergo no rotation or excitation, but they must still be copied into \texttt{new\_state} to preserve the unaffected components of the wavefunction.
+
+For basis states in the active space, the simulator applies the excitation. First, the phase of the original basis state is updated according to Equation \eqref{eq:qubit-excitation-update-basis-state}:
+
 \begin{equation} \tag{\eqref{eq:qubit-excitation-update-basis-state}}
     c_{\boldsymbol{i}} \leftarrow c_{\boldsymbol{i}} \cos\left(\frac{\theta}{2}\right)
 \end{equation}
 
+In C++, this calculation is implemented as:
+
+\begin{minted}{cpp}
+    std::complex<double> c_ibs = coeff * std::cos(theta / 2);
+\end{minted}
+
+Next, the partner basis state is calculated using Equations \eqref{eq:qubit-excitation-baseline-partner-state-1} and \eqref{eq:qubit-excitation-baseline-partner-state-2}:
+
+\begin{align}
+    c \ket{\boldsymbol{i'}} &= -iG^{\boldsymbol{k}}_{\boldsymbol{l}} \ket{\boldsymbol{i}}, \tag{\eqref{eq:qubit-excitation-baseline-partner-state-1}} \\
+    -iG^{\boldsymbol{k}}_{\boldsymbol{l}} &= \left( \prod_n \sigma^-_{k_n} \sigma^+_{l_n} - \text{h.c.} \right). \tag{\eqref{eq:qubit-excitation-baseline-partner-state-2}}
+\end{align}
+
+Computationally, the electron transitions correspond to toggling the bits at the positions defined by the orbital sets $\boldsymbol{k}$ and $\boldsymbol{l}$. Since the state is already confirmed to be in the active space, applying a bitwise XOR (\texttt{\^{}}) correctly removes and adds electrons at the respective orbitals:
+
+\begin{minted}{cpp}
+    uint64_t partner_basis_state = basis_state;
+    for (int i = 0; i < k.size(); i++) {
+        partner_basis_state ^= (1ULL << k[i]);
+        partner_basis_state ^= (1ULL << l[i]);
+    }
+\end{minted}
+
+The direction of the excitation, stored in $c$, is determined by checking the occupancy of the first orbital in the $\boldsymbol{k}$ set:
+
+\begin{minted}{cpp}
+    int c = (basis_state >> k[0]) & 1ULL ? 1 : -1;
+\end{minted}
+
+Finally, the amplitude of the newly acquired partner state is calculated using Equation \eqref{eq:qubit-excitation-partner-state-update-phase}:
+
+\begin{equation} \tag{\ref{eq:qubit-excitation-partner-state-update-phase}}
+    c_{\boldsymbol{i'}} \leftarrow c_{\boldsymbol{i'}} + c \sin\left(\frac{\theta}{2}\right).
+\end{equation}
+
+This maps to the following code snippet:
+
+\begin{minted}{cpp}
+    std::complex<double> c_ipbs = c * std::sin(theta/2) * coeff;
+\end{minted}
+
+Combining these components yields the complete qubit excitation function:
+
+\begin{minted}{cpp}
+    State apply_qubit_excitation(const State& state, const std::vector<int>& k, const std::vector<int>& l, const double theta) {
+    // Initials
+    State new_state;
+    new_state.reserve(state.size() * 2);
+    // Loop through state
+    for (const auto& [basis_state, coeff] : state) {
+        // Check for P0
+        bool k_val = (basis_state >> k[0]) & 1ULL;
+        bool skip = false;
+        for (int i = 0; i < k.size(); i++) {
+            if (((basis_state >> k[i]) & 1ULL) != k_val) skip = true;
+            if (((basis_state >> l[i]) & 1ULL) == k_val) skip = true;
+        }
+        if (skip) {
+            // Nullspace
+            new_state[basis_state] += coeff;
+        } else {
+            // Active Space - Implement excitation
+            std::complex<double> c_ibs = coeff * std::cos(theta / 2);
+            uint64_t partner_basis_state = basis_state;
+            for (int i = 0; i < k.size(); i++) {
+                partner_basis_state ^= (1ULL << k[i]);
+                partner_basis_state ^= (1ULL << l[i]);
+            }
+            int c = (basis_state >> k[0]) & 1ULL ? 1 : -1;
+            std::complex<double> c_ipbs = c * std::sin(theta/2) * coeff;
+
+            new_state[basis_state] += c_ibs;
+            new_state[partner_basis_state] += c_ipbs;
+        }
+    }
+    return new_state;
+}
+\end{minted}
+
+% ==========================================
+% Subsection: introducing fermions
+% ==========================================
+\subsection{introducing fermions}
+
+
+
+% ==========================================
+% Subsection: other efficient Extensions
+% ==========================================
+\subsection{other Extensions}
