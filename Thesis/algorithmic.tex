@@ -6,7 +6,7 @@
 % ==========================================
 % Section: Matrix-Free Direct State Evolution
 % ==========================================
-\section{Matrix-Free Direct State Evolution}
+\section{Matrix-Free Direct State Evolution}\label{sec:matrix-free-direct-state-evolution}
 The core computational challenge in simulating many-body quantum systems lies in the efficient application of excitation operators to the underlying state vector. Constructing and applying global unitary matrices is highly memory-prohibitive for large Hilbert spaces. Therefore, the simulator leverages a direct state-vector approach, exploiting the algebraic properties of the excitation generator to execute updates directly on the computational basis.
 
 To translate this theoretical framework into a high-performance algorithmic routine, we must deconstruct the evaluation of the unitary operation defined in Equation \eqref{unitary_operation}. As an initial step, we isolate the fundamental mechanics by considering the qubit excitation framework. This isolated model provides a computational baseline that is then subsequently generalized to incorporate fermionic anticommutation relations.
@@ -46,13 +46,20 @@ Finally, this term induces an amplitude update on the newly acquired partner sta
 % ==========================================
 % Subsection: Incorporating the Fermionic Phase
 % ==========================================
-\subsection{Incorporating the Fermionic Phase}
+\subsection{Incorporating the Fermionic Phase}\label{subsec:incorporating-the-fermionic-phase}
 
 While the foundational baseline algorithm effectively handles qubit-based rotations, it is inherently insufficient for simulating the characteristics of true fermionic many-body systems. To accurately model fermions, the computational routine must replace the qubit excitation generator with its fermionic counterpart, the multi-excitation generator $G_{\boldsymbol{pq}}$, as defined in Equation \eqref{eq:mult_fe_exc_generator}.
 
-As established in Section \ref{subsec:the-jordan-wigner-transformation}, fermionic creation and annihilation operators are conventionally mapped to qubit representations via the Jordan-Wigner transformation. On physical quantum hardware, capturing these fermionic statistics requires the explicit application of a parity string ($\hat{\sigma}^{\otimes(N-k)}_z$)—a tensor product of Pauli-Z operators spanning all intermediate qubits between the target orbitals. However, within our classical simulation framework, we can exploit direct access to the underlying state vector. Rather than explicitly applying costly Pauli matrices, the architecture computes the parity of the occupations between the relevant orbitals algebraically.
+Within a classical simulation framework, direct access to the state vector enables the evaluation of fermionic excitations without mapping to qubit Pauli operators. By representing computational basis states as Fock space occupation vectors $\ket{\mathbf{n}} = \ket{n_0, n_1, \dots, n_{M-1}}$ with $n_i \in \{0, 1\}$, the algebraic action of second-quantized fermionic creation ($a_k^\dagger$) and annihilation ($a_k$) operators can be defined directly on the basis states.
 
-When acting upon the computational basis, each intermediate occupied orbital ($\ket{1}$) logically contributes a $-1$ phase, while empty orbitals ($\ket{0}$) contribute a $+1$ phase. Consequently, our algorithm simply counts the number of occupied orbitals strictly located between the origin and destination of the electron jump. If the intermediate occupation count is even, the $-1$ eigenvalues perfectly cancel, resulting in a global $+1$ multiplier (no phase shift). Conversely, if the intermediate occupation is odd, a net $-1$ phase is applied to the quantum state amplitude.
+The fermionic anticommutation relations dictate that acting on a target spin-orbital $k$ introduces a parity phase determined by the total occupation of all preceding orbitals in the canonical ordering. Algebraically, the action of these operators on a Fock state $\ket{\mathbf{n}}$ is expressed as:
+\begin{align} \label{eq:annhiliation-creation-algebraic-definition}
+	a_k \ket{\mathbf{n}} &= \delta_{n_k, 1} (-1)^{\sum_{j=0}^{k-1} n_j} \ket{n_0, \dots, n_k - 1, \dots, n_{M-1}}, \\
+	a_k^\dagger \ket{\mathbf{n}} &= \delta_{n_k, 0} (-1)^{\sum_{j=0}^{k-1} n_j} \ket{n_0, \dots, n_k + 1, \dots, n_{M-1}},
+\end{align}
+where $\delta$ denotes the Kronecker delta, enforcing the Pauli exclusion principle. The phase factor $(-1)^{\sum_{j=0}^{k-1} n_j}$ evaluates to $+1$ for an even preceding occupation count and $-1$ for an odd count.
+
+To evaluate an arbitrary $n$-fold excitation, the constituent operators are applied sequentially. For each operator targeting index $k$, the parity phase is computed against the instantaneous state vector. By updating the occupation value $n_k \mapsto 1 - n_k$ immediately after each valid operator application, this algebraic formulation tracks all necessary anticommutation phases natively, eliminating the need for Jordan-Wigner parity strings.
 
 This fundamental difference in dynamic behavior enforces the strict antisymmetry required of fermionic wavefunctions, originating from the Pauli exclusion principle. Algorithmically, it can be recognized that the nullspace projector $P_0$ acts purely based on the occupancy of the initial and target orbitals, ignoring intermediate phase dynamics. Therefore, the correct evaluation of the active state rotation relies entirely on accurately tracking and applying this classically computed parity phase.
 
@@ -60,12 +67,6 @@ Finally, note that the distinct computational advantage of this classical approa
 
 \cite[chapter III.B]{anand2022quantum}
 \cite[chapter 2.1.1]{schleich2025quantum}
-
-% ==========================================
-% Subsection: Bitwise Representation and Algorithmic Mapping
-% ==========================================
-\subsection{Bitwise Representation and Algorithmic Mapping}
-
 
 
 

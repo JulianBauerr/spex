@@ -463,7 +463,7 @@ State apply_fermion_excitation(const State& state, const std::vector<int>& k,
         } else {
             // Compute the phase
             int phase = 1;
-            uint64_t temp_state = basis_state;
+            uint64_t new_basis_state = basis_state;
 
             // Determine operation direction:
             // If k_val == 0, 'k' is empty and 'l' is occupied. (Applying T)
@@ -474,34 +474,25 @@ State apply_fermion_excitation(const State& state, const std::vector<int>& k,
             // Apply annihilation
             for (int idx : annihilate_idx) {
                 uint64_t mask = (1ULL << idx) - 1;
-                if (__builtin_popcountll(temp_state & mask) % 2 != 0) {
+                if (__builtin_popcountll(new_basis_state & mask) % 2 != 0) {
                     phase = -phase;
                 }
-                temp_state ^= (1ULL << idx);
+                new_basis_state ^= (1ULL << idx);
             }
 
             // Apply creation
             for (int idx : create_idx) {
                 uint64_t mask = (1ULL << idx) - 1;
-                if (__builtin_popcountll(temp_state & mask) % 2 != 0) {
+                if (__builtin_popcountll(new_basis_state & mask) % 2 != 0) {
                     phase = -phase;
                 }
-                temp_state ^= (1ULL << idx);
-            }
-
-            // bitwise state transition
-            uint64_t new_basis_state = basis_state;
-            for (int i = 0; i < k.size(); i++) {
-                new_basis_state ^= (1ULL << k[i]);
-                new_basis_state ^= (1ULL << l[i]);
+                new_basis_state ^= (1ULL << idx);
             }
 
             // Relative sign for T or -T^\dagger
             int c = (k_val == 1) ? -1 : 1;
 
             // update amplitudes
-            // we previously started from a copy of `state` and therefore
-            // added coeff*(cos(theta/2)-1) to produce coeff*cos(theta/2).
             new_state[basis_state] += coeff * std::cos(theta / 2);
             new_state[new_basis_state] += c * phase * std::sin(theta / 2) * coeff;
         }
