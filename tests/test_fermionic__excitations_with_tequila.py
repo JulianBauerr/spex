@@ -125,4 +125,47 @@ class TestSpexExcitations:
 
         assert_states_match(tq_wfn, spex_result)
 
+    @pytest.mark.parametrize("theta", [np.pi/2, np.pi/4])
+    def test_excitation_to_already_occupied(self, h2_molecule, theta):
+        """Excitation into an already occupied orbital: X([0,2]) + exct([(0,2)])"""
+        U0 = tq.gates.X([0, 2])
+        FE = h2_molecule.make_excitation_gate(indices=[(0, 2)], angle="a")
+        tq_wfn = tq.simulate(U0 + FE, variables={"a": theta})
 
+        initial_state = {(1 << 0) + (1 << 2): 1.0}
+        spex_result = spex.apply_fermion_excitation(initial_state, [0], [2], theta)
+
+        assert_states_match(tq_wfn, spex_result)
+
+    @pytest.mark.parametrize("theta", [np.pi/4, np.pi/2])
+    def test_partial_occupation_multi_excitation(self, h2_molecule, theta):
+        """Partially occupied: X([0,1,2]) + exct([(0,2),(1,3)])"""
+        U0 = tq.gates.X([0, 1, 2])
+        FE = h2_molecule.make_excitation_gate(indices=[(1, 3), (0, 2)], angle="a")
+        tq_wfn = tq.simulate(U0 + FE, variables={"a": theta})
+
+        initial_state = {(1 << 0) + (1 << 1) + (1 << 2): 1.0}
+        spex_result = spex.apply_fermion_excitation(initial_state, [0, 1], [2, 3], theta)
+
+        assert_states_match(tq_wfn, spex_result)
+
+    @pytest.mark.parametrize("theta", [np.pi/2])
+    def test_number_excitations_self_pairs(self, h2_molecule, theta):
+        """Number excitations where source and target are the same orbital."""
+        # (0 -> 0): trivial result
+        initial_state = {(1 << 0): 1.0}
+        tq_wfn = dict(initial_state)
+        spex_result = spex.apply_fermion_excitation(initial_state, [0], [0], theta)
+        assert_states_match(tq_wfn, spex_result)
+
+        # (0->0) and (1->1): both trivial
+        initial_state = {(1 << 0) + (1 << 1): 1.0}
+        tq_wfn = dict(initial_state)
+        spex_result = spex.apply_fermion_excitation(initial_state, [0, 1], [0, 1], theta)
+        assert_states_match(tq_wfn, spex_result)
+
+        # mixed: (0->2) and (1->1)
+        initial_state = {(1 << 0) + (1 << 1): 1.0}
+        tq_wfn = dict(initial_state)
+        spex_result = spex.apply_fermion_excitation(initial_state, [0, 1], [2, 1], theta)
+        assert_states_match(tq_wfn, spex_result)
