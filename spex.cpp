@@ -25,6 +25,36 @@ using State = ankerl::unordered_dense::map<uint64_t, std::complex<double>>;
 constexpr double FERMION_EXCITATION_CLEANUP_TOL = 1e-12;
 
 /**
+ * Structure to define one single term of a Hamiltonian can be (0, 1, 2 -body)
+ */
+struct HamiltonianTerm {
+    std::vector<int> creation_idx;
+    std::vector<int> annihilation_idx;
+    std::double_t weight;
+};
+
+// 0-Body Term: w_0 * I
+void add_nuclear_repulsion(std::vector<HamiltonianTerm>& hamiltonian,
+                                  double w0) {
+    hamiltonian.push_back({ {}, {}, w0 });
+}
+
+// 1-Body Term: h_{pq} * a_p^\dagger a_q
+void add_one_body_term(std::vector<HamiltonianTerm>& hamiltonian,
+                              int p, int q, double h_pq) {
+    hamiltonian.push_back({ {p}, {q}, h_pq });
+}
+
+// 2-Body Term: 0.5 * g_{pqrs} * a_p^\dagger a_q^\dagger a_s a_r
+void add_two_body_term(std::vector<HamiltonianTerm>& hamiltonian,
+                              int p, int q, int r, int s, double g_pqrs) {
+    std::vector<int> creation_order = {q, p};
+    std::vector<int> annihilation_order = {r, s};
+
+    hamiltonian.push_back({ creation_order, annihilation_order, 0.5 * g_pqrs });
+}
+
+/**
  * Structure to represent an exponential Pauli term like "X(0)Y(1)Z(2)" and an angle θ.
  */
 struct ExpPauliTerm {
@@ -356,53 +386,13 @@ std::string state_to_string(const State& state, int num_qubits) {
     return s;
 }
 
-// Excitations
-
-/**
- * Applies a fermionic creation operator on the i-th qubit
- * @param state The basis state on which the creation works
- * @param i the qubit
- * @return a tuple of the new state and the new phase
- */
-std::pair<uint64_t, std::complex<double>> apply_fe_creation(uint64_t state, int i) {
-    bool occupied = (state >> i) & 1ULL;
-    if (occupied) return {0, 0.0};
-    uint64_t new_basis_state = state;
-
-    uint64_t mask = 0;
-    for (int j = 0; j < i; j++) {
-        mask += (1ULL << j);
-    }
-    bool parity = __builtin_popcountll(state & mask) % 2;
-    std::complex<double> phase = parity ? std::complex<double>(-1, 0) : std::complex<double>(1, 0);
-    new_basis_state ^= (1ULL << i);
-    return {new_basis_state, phase};
-}
-
-/**
- * Applies a fermionic annihilation operator on the i-th qubit
- * @param state The basis state on which the creation works
- * @param i the qubit
- * @return a tuple of the new state and the new phase
- */
-std::pair<uint64_t, std::complex<double>> apply_fe_annihilation(uint64_t state, int i) {
-    bool occupied = (state >> i) & 1ULL;
-    if (!occupied) return {0, 0.0};
-    uint64_t new_basis_state = state;
-
-    uint64_t mask = 0;
-    for (int j = 0; j < i; j++) {
-        mask += (1ULL << j);
-    }
-    bool parity = __builtin_popcountll(state & mask) % 2;
-    std::complex<double> phase = parity ? std::complex<double>(-1, 0) : std::complex<double>(1, 0);
-    new_basis_state ^= (1ULL << i);
-    return {new_basis_state, phase};
-}
-
 State apply_qubit_excitation(const State& state, const std::vector<int>& k,
     const std::vector<int>& l, const double theta) {
     // Checks
+    if (state.empty())
+        throw std::invalid_argument("A state cannot be empty");
+    if (k.size() != l.size())
+        throw std::invalid_argument("The orbital sets must have the same length");
 
     // Initials
     State new_state;
@@ -443,12 +433,18 @@ State apply_qubit_excitation(const State& state, const std::vector<int>& k,
 
 
 State apply_fermion_excitation(const State& state, const std::vector<int>& k,
-    const std::vector<int>& l, const double theta) {
+                               const std::vector<int>& l, const double theta) {
     // Checks
+    if (state.empty())
+        throw std::invalid_argument("A state cannot be empty");
+    if (k.size() != l.size())
+        throw std::invalid_argument("The orbital sets must have the same length");
 
     // Initials
     State new_state;
     new_state.reserve(state.size() * 2);
+    const double cos2 = std::cos(theta / 2);
+    const double sin2 = std::sin(theta / 2);
     // Loop through state
     for (const auto& [basis_state, coeff] : state) {
         // Check for P0
@@ -493,8 +489,8 @@ State apply_fermion_excitation(const State& state, const std::vector<int>& k,
             int c = (k_val == 1) ? -1 : 1;
 
             // update amplitudes
-            new_state[basis_state] += coeff * std::cos(theta / 2);
-            new_state[new_basis_state] += c * phase * std::sin(theta / 2) * coeff;
+            new_state[basis_state] += coeff * cos2;
+            new_state[new_basis_state] += c * phase * sin2 * coeff;
         }
     }
     // Prune tiny residual amplitudes introduced by floating point arithmetic
@@ -503,6 +499,76 @@ State apply_fermion_excitation(const State& state, const std::vector<int>& k,
         else ++it;
     }
     return new_state;
+}
+
+std::complex<double> compute_term_expectation_value(const State &phi, const State &psi,
+                                             const std::vector<int> &creation_idx,
+                                             const std::vector<int> &annihilation_idx,
+                                             const std::double_t weight) {
+    // Checks
+
+    // Init
+    std::complex<double> term_overlap = 0.0;
+    //Loop
+    for (const auto& [basis_state_psi, coeff_psi] : psi) {
+        uint64_t new_basis_state = basis_state_psi;
+        int phase = 1;
+        bool skip = false;
+
+        // apply Annihilation
+        for (int idx : annihilation_idx) {
+            // Check of the orbital is already empty
+            if ((new_basis_state >> idx & 1ULL) == 0) {
+                skip = true;
+                break;
+            }
+
+            uint64_t mask = (1ULL << idx) - 1;
+            if (__builtin_popcountll(new_basis_state & mask) % 2 != 0) {
+                phase = -phase;
+            }
+            new_basis_state ^= (1ULL << idx);
+        }
+        if (skip) continue;
+
+        // apply Creation
+        for (int idx : creation_idx) {
+            // Check of the orbital is already occupied
+            if ((new_basis_state >> idx & 1ULL) == 1) {
+                skip = true;
+                break;
+            }
+            uint64_t mask = (1ULL << idx) - 1;
+            if (__builtin_popcountll(new_basis_state & mask) % 2 != 0) {
+                phase = -phase;
+            }
+            new_basis_state ^= (1ULL << idx);
+        }
+        if (skip) continue;
+
+        // Compute overlap
+        auto it = phi.find(new_basis_state);
+        if (it != phi.end()) {
+            std::complex<double> coeff_phi = std::conj(it->second);
+            term_overlap += coeff_phi * (weight * phase * coeff_psi);
+        }
+    }
+
+    return term_overlap;
+}
+
+std::complex<double> compute_expectation_value(const State &phi, const State &psi,
+                                        const std::vector<HamiltonianTerm> &hamiltonian) {
+    // Checks
+
+    std::complex<double> result = 0.0;
+
+    for (const auto &term: hamiltonian) {
+        std::complex<double> term_value = compute_term_expectation_value(phi, psi, term.creation_idx,
+                                                                         term.annihilation_idx, term.weight);
+        result += term_value;
+    }
+    return result;
 }
 
 namespace pybind11 {
@@ -569,16 +635,6 @@ PYBIND11_MODULE(spex_tequila, p) {
     p.def("state_to_string", &state_to_string,
           "Convert a quantum state to a string representation",
           py::arg("state"), py::arg("num_qubits"));
-
-    // Expose apply_fe_creation function
-    p.def("apply_fe_creation", &apply_fe_creation,
-        "",
-        py::arg("state"),py::arg("i"));
-
-    // Expose apply_fe_annihilation function
-    p.def("apply_fe_annihilation", &apply_fe_annihilation,
-        "",
-        py::arg("state"),py::arg("i"));
 
     // Expose apply_qubit_excitation function
     p.def("apply_qubit_excitation", &apply_qubit_excitation,
