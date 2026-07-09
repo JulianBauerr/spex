@@ -50,22 +50,25 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
     def test_excite_from_empty_orbital(self):
         # |...0001> (orb0). try 1 -> 2
         res = spex.apply_fermion_excitation(
-            {fock(0): 1.0}, [1], [2], 0.25
-        )
+    {fock(0): 1.0},
+    spex.FermionTerm([1], [2], 1.0j),
+    0.25)
         self.assertStateDictsAlmostEqual(res, {fock(0): 1.0})
 
     def test_pauli_blocking(self):
         # |...0011> (0,1). try 0 -> 1
         res = spex.apply_fermion_excitation(
-            {fock(0, 1): 1.0}, [0], [1], PI_2
-        )
+    {fock(0, 1): 1.0},
+    spex.FermionTerm([0], [1], 1.0j),
+    PI_2)
         self.assertStateDictsAlmostEqual(res, {fock(0, 1): 1.0})
 
     def test_the_absolute_vacuum(self):
         # vacuum 0b0000
         res = spex.apply_fermion_excitation(
-            {0: 1.0}, [0], [1], PI_2
-        )
+    {0: 1.0},
+    spex.FermionTerm([0], [1], 1.0j),
+    PI_2)
         self.assertStateDictsAlmostEqual(res, {0: 1.0})
 
     # GROUP 2: Single excitations
@@ -73,8 +76,9 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
     def test_single_excitation_50_50_split(self):
         # 0 -> 1 at π/4 => (|01>+|10>)/√2
         res = spex.apply_fermion_excitation(
-            {fock(0): 1.0}, [0], [1], PI_2
-        )
+    {fock(0): 1.0},
+    spex.FermionTerm([0], [1], 1.0j),
+    PI_2)
         self.assertStateDictsAlmostEqual(
             res, {fock(0): S2, fock(1): -S2}
         )
@@ -82,8 +86,9 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
     def test_single_excitation_full_transfer(self):
         # 0 -> 1 at π/2 => full transfer
         res = spex.apply_fermion_excitation(
-            {fock(0): 1.0}, [0], [1], PI
-        )
+    {fock(0): 1.0},
+    spex.FermionTerm([0], [1], 1.0j),
+    PI)
         self.assertStateDictsAlmostEqual(
             res, {fock(1): -1.0}
         )
@@ -91,8 +96,9 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
     def test_single_deexcitation(self):
         # 1 -> 0 reverse
         res = spex.apply_fermion_excitation(
-            {fock(1): 1.0}, [0], [1], -PI_2
-        )
+    {fock(1): 1.0},
+    spex.FermionTerm([0], [1], 1.0j),
+    -PI_2)
         self.assertStateDictsAlmostEqual(res, {fock(1): S2, fock(0): -S2})
 
     # GROUP 3: Parity (JW)
@@ -100,15 +106,17 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
     def test_parity_long_jump_over_empty_orbital(self):
         # 0 -> 2 over empty 1 (parity +)
         res = spex.apply_fermion_excitation(
-            {fock(0): 1.0}, [0], [2], PI_2
-        )
+    {fock(0): 1.0},
+    spex.FermionTerm([0], [2], 1.0j),
+    PI_2)
         self.assertStateDictsAlmostEqual(res, {fock(0): S2, fock(2): -S2})
 
     def test_parity_long_jump_over_occupied_orbital(self):
         # 0 -> 2 over occupied 1 (parity -)
         res = spex.apply_fermion_excitation(
-            {fock(0, 1): 1.0}, [0], [2], PI_2
-        )
+    {fock(0, 1): 1.0},
+    spex.FermionTerm([0], [2], 1.0j),
+    PI_2)
         self.assertStateDictsAlmostEqual(
             res, {fock(0, 1): S2, fock(1, 2): S2}
         )
@@ -118,8 +126,9 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
     def test_double_excitation_standard(self):
         # (0,1) -> (2,3)
         res = spex.apply_fermion_excitation(
-            {fock(0, 1): 1.0}, [0, 1], [2, 3], PI_2
-        )
+    {fock(0, 1): 1.0},
+    spex.FermionTerm([0, 1], [2, 3], 1.0j),
+    PI_2)
         self.assertStateDictsAlmostEqual(
             res, {fock(0, 1): S2, fock(2, 3): S2}
         )
@@ -127,8 +136,9 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
     def test_double_excitation_parity_trap(self):
         # (0,1) -> (2,4) with orb3 occupied (0b01011->0b11100)
         res = spex.apply_fermion_excitation(
-            {fock(0, 1, 3): 1.0}, [0, 1], [2, 4], PI_2
-        )
+    {fock(0, 1, 3): 1.0},
+    spex.FermionTerm([0, 1], [2, 4], 1.0j),
+    PI_2)
         self.assertStateDictsAlmostEqual(
             res, {fock(0, 1, 3): S2, fock(2, 3, 4): -S2}
         )
@@ -139,22 +149,27 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
         # 0.8|001> + 0.6|010>, swap 0 -> 2
         initial = {fock(0): 0.8, fock(1): 0.6}
         res = spex.apply_fermion_excitation(
-            initial, [0], [2], PI
-        )
+    initial,
+    spex.FermionTerm([0], [2], 1.0j),
+    PI)
         self.assertStateDictsAlmostEqual(res, {fock(2): -0.8, fock(1): 0.6})
 
     def test_destructive_quantum_interference(self):
         # (|01>+|10>)/√2, rotate 0->1 -> |10>
         initial = {fock(0): S2, fock(1): S2}
         res = spex.apply_fermion_excitation(
-            initial, [0], [1], PI_2
-        )
+    initial,
+    spex.FermionTerm([0], [1], 1.0j),
+    PI_2)
         self.assertStateDictsAlmostEqual(res, {fock(0): 1.0})
 
     # GROUP 6: Complex amplitudes
 
     def test_complex_phase_preservation(self):
-        res = spex.apply_fermion_excitation({fock(0): 1.0j}, [0], [1], PI_2)
+        res = spex.apply_fermion_excitation(
+    {fock(0): 1.0j},
+    spex.FermionTerm([0], [1], 1.0j),
+    PI_2)
         self.assertStateDictsAlmostEqual(
             res, {fock(0): S2 * 1.0j, fock(1): -S2 * 1.0j}
         )
@@ -162,8 +177,9 @@ class TestQuantumEngineeringFermionEngine(unittest.TestCase):
     def test_complex_interference(self):
         initial = {fock(0): S2, fock(1): S2 * 1.0j}
         res = spex.apply_fermion_excitation(
-            initial, [0], [1], PI_2
-        )
+    initial,
+    spex.FermionTerm([0], [1], 1.0j),
+    PI_2)
         self.assertStateDictsAlmostEqual(
             res, {fock(0): (0.5 + 0.5j), fock(1): (-0.5 + 0.5j)}
         )

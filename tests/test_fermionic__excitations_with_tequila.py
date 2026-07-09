@@ -68,7 +68,10 @@ class TestSpexExcitations:
         tq_wfn = tq.simulate(U0 + FE, variables={"a": theta})
 
         initial_state = {1: 1.0}
-        spex_result = spex.apply_fermion_excitation(initial_state, [0], [1], theta)
+        spex_result = spex.apply_fermion_excitation(
+    initial_state,
+    spex.FermionTerm([0], [1], 1.0j),
+    theta)
 
         assert_states_match(tq_wfn, spex_result)
 
@@ -80,7 +83,10 @@ class TestSpexExcitations:
         tq_wfn = tq.simulate(U0 + FE, variables={"a": theta})
 
         initial_state = {3: 1.0}
-        spex_result = spex.apply_fermion_excitation(initial_state, [0], [2], theta)
+        spex_result = spex.apply_fermion_excitation(
+    initial_state,
+    spex.FermionTerm([0], [2], 1.0j),
+    theta)
 
         assert_states_match(tq_wfn, spex_result)
 
@@ -92,7 +98,10 @@ class TestSpexExcitations:
         tq_wfn = tq.simulate(U0 + FE, variables={"a": theta})
 
         initial_state = {1: 1.0}
-        spex_result = spex.apply_fermion_excitation(initial_state, [0], [2], theta)
+        spex_result = spex.apply_fermion_excitation(
+    initial_state,
+    spex.FermionTerm([0], [2], 1.0j),
+    theta)
 
         assert_states_match(tq_wfn, spex_result)
 
@@ -106,7 +115,7 @@ class TestSpexExcitations:
         tq_wfn = tq.simulate(U0 + FE, variables={"a": theta})
 
         initial_state = {(1 << 0) + (1 << 1): 1.0}  # |...0011> -> 3
-        spex_result = spex.apply_fermion_excitation(initial_state, [0, 1], [2, 3], theta)
+        spex_result = spex.apply_fermion_excitation(initial_state, spex.FermionTerm([0, 1], [2, 3], 1.0j), theta)
 
         assert_states_match(tq_wfn, spex_result)
 
@@ -121,7 +130,7 @@ class TestSpexExcitations:
 
         # |...01011> -> 11
         initial_state = {(1 << 0) + (1 << 1) + (1 << 3): 1.0}
-        spex_result = spex.apply_fermion_excitation(initial_state, [0, 1], [2, 4], theta)
+        spex_result = spex.apply_fermion_excitation(initial_state, spex.FermionTerm([0, 1], [2, 4], 1.0j), theta)
 
         assert_states_match(tq_wfn, spex_result)
 
@@ -133,7 +142,10 @@ class TestSpexExcitations:
         tq_wfn = tq.simulate(U0 + FE, variables={"a": theta})
 
         initial_state = {(1 << 0) + (1 << 2): 1.0}
-        spex_result = spex.apply_fermion_excitation(initial_state, [0], [2], theta)
+        spex_result = spex.apply_fermion_excitation(
+    initial_state,
+    spex.FermionTerm([0], [2], 1.0j),
+    theta)
 
         assert_states_match(tq_wfn, spex_result)
 
@@ -145,7 +157,7 @@ class TestSpexExcitations:
         tq_wfn = tq.simulate(U0 + FE, variables={"a": theta})
 
         initial_state = {(1 << 0) + (1 << 1) + (1 << 2): 1.0}
-        spex_result = spex.apply_fermion_excitation(initial_state, [0, 1], [2, 3], theta)
+        spex_result = spex.apply_fermion_excitation(initial_state, spex.FermionTerm([0, 1], [2, 3], 1.0j), theta)
 
         assert_states_match(tq_wfn, spex_result)
 
@@ -155,17 +167,20 @@ class TestSpexExcitations:
         # (0 -> 0): trivial result
         initial_state = {(1 << 0): 1.0}
         tq_wfn = dict(initial_state)
-        spex_result = spex.apply_fermion_excitation(initial_state, [0], [0], theta)
+        spex_result = spex.apply_fermion_excitation(
+    initial_state,
+    spex.FermionTerm([0], [0], 1.0j),
+    theta)
         assert_states_match(tq_wfn, spex_result)
 
         # (0->0) and (1->1): both trivial
         initial_state = {(1 << 0) + (1 << 1): 1.0}
         tq_wfn = dict(initial_state)
-        spex_result = spex.apply_fermion_excitation(initial_state, [0, 1], [0, 1], theta)
+        spex_result = spex.apply_fermion_excitation(initial_state, spex.FermionTerm([0, 1], [0, 1], 1.0j), theta)
         assert_states_match(tq_wfn, spex_result)
 
         # mixed: (0->2) and (1->1)
         initial_state = {(1 << 0) + (1 << 1): 1.0}
         tq_wfn = dict(initial_state)
-        spex_result = spex.apply_fermion_excitation(initial_state, [0, 1], [2, 1], theta)
+        spex_result = spex.apply_fermion_excitation(initial_state, spex.FermionTerm([0, 1], [2, 1], 1.0j), theta)
         assert_states_match(tq_wfn, spex_result)
