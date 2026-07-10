@@ -6,19 +6,9 @@ from openfermion import FermionOperator, jordan_wigner
 import spex_tequila as spex
 
 
-def _openfermion_from_term(term):
-    """Convert a spex FermionTerm to an OpenFermion FermionOperator.
-
-    Uses FermionTerm.to_openfermion_string() to get the correct string
-    representation matching spex's convention, then wraps it in a
-    FermionOperator with the term's weight.
-    """
-    return term.weight * FermionOperator(term.to_openfermion_string())
-
-
 def _tq_expectation(fermion_terms, state_circuit):
     """Compute ⟨ψ| O |ψ⟩ via Tequila for a list of FermionTerms."""
-    of_terms = [_openfermion_from_term(t) for t in fermion_terms]
+    of_terms = [t.weight * FermionOperator(t.to_fermion_string()) for t in fermion_terms]
     op = sum(of_terms, FermionOperator())
     qubit_op = jordan_wigner(op)
     H_tq = tq.QubitHamiltonian.from_openfermion(qubit_op)
