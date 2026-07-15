@@ -155,111 +155,6 @@ Combining these components yields the complete qubit excitation function:
 \end{minted}
 
 % ==========================================
-% Subsection: introducing fermions
-% ==========================================
-\subsection{introducing fermions}
-After having the Baseline of the Qubit defined we can now concentrate on the differences of the fermionic Excitation. As also already seen before in Section \eqref{sec:matrix-free-direct-state-evolution} the changes are not severe. Actually we only need to apply more logic to the Excitation itself because the structure is the same and only the Generator of the unitary funtion changed.
-
-The initialization and the checking for nullspace is exactly the same as before, but the computation of the excitation changes. First we need to calculate the direction in which the operators act. For that we take the boolean value (\texttt{k\_val}) of our first orbital in the orbital set \texttt{k}, which we previously already calculated in the nullspace check as following:
-\begin{minted}{cpp}
-    bool k_val = (basis_state >> k[0]) & 1ULL;
-\end{minted}
-We can then check if this \texttt{k\_val} is empty or occupied, which tells us the direction. Empty means that \texttt{k} is the creation set, so the set of orbitals where an electron must be created. Therefore \texttt{l} is the annihilation set, so the set of orbitals which are all occupied and the electrons needed to be annihilated. Note that we can only look at the first because we already applied the nullspace Projector and therefore know that this basis state is in the active space. In C++ we can use two ternary operators to describes this behaviour as following:
-\begin{minted}{cpp}
-    const std::vector<int>& annihilate_idx = (k_val == 0) ? l : k;
-    const std::vector<int>& create_idx = (k_val == 0) ? k : l;
-\end{minted}
-
-Now we can apply the excitation to a copy of the state (\texttt{new\_basis\_state}), because we later need the original one again to update the amplitudes correctly. As explained before in \eqref{subsec:incorporating-the-fermionic-phase}, we need to define the behavior of equation \eqref{eq:annhiliation-creation-algebraic-definition}:
-\begin{align} \tag{\eqref{eq:annhiliation-creation-algebraic-definition}}
-    a_k \ket{\mathbf{n}} &= \delta_{n_k, 1} (-1)^{\sum_{j=0}^{k-1} n_j} \ket{n_0, \dots, n_k - 1, \dots, n_{M-1}}, \\
-    a_k^\dagger \ket{\mathbf{n}} &= \delta_{n_k, 0} (-1)^{\sum_{j=0}^{k-1} n_j} \ket{n_0, \dots, n_k + 1, \dots, n_{M-1}}.
-\end{align}
-
-We start with the phase factor $(-1)^{\sum_{j=0}^{k-1} n_j}$. To translate it into C++ we build a mask, which has 1 from the first index to then the current index, like this:
-\begin{minted}{cpp}
-    uint64_t mask = (1ULL << idx) - 1;
-\end{minted}
-
-After this we can count the number of occupied orbitals using the mask. For that we apply the mask with a $\&$ operator to the basis state. That cuts out the part of the basis state we need for the computation. On this part we then can apply the C++ \texttt{\_\_builtin\_popcountll} function which counts the number of set bits in the bitstring. After that we only need to check if this number is even or odd, which we can also do with a bit operation \texttt{\% 2}. If this result is now not 0 it means its uneven and we need to apply a phase of -1. After this we only need to apply the bitflip of the orbital to annihilate or create the electron. The code for this looks like this:
-\begin{minted}{cpp}
-    for (int idx : annihilate_idx) {
-        uint64_t mask = (1ULL << idx) - 1;
-        if (__builtin_popcountll(new_basis_state & mask) % 2 != 0) {
-            phase = -phase;
-        }
-        new_basis_state ^= (1ULL << idx);
-    }
-\end{minted}
-
-Finally we only need to update the amplitudes correctly, for that we first need to look at the direction of the excitation to define the \texttt{c} value correctly. We can do this in the same manner we did it before for the orbital sets:
-\begin{minted}{cpp}
-    int c = (k_val == 1) ? -1 : 1;
-\end{minted}
-The rest of the amplitudes get updated excatly as we alredy did in the qubit implementation.
-
-Putting all toegther we get:
-\begin{minted}{cpp}
-    State apply_fermion_excitation(const State& state, const std::vector<int>& k,
-    const std::vector<int>& l, const double theta) {
-    // Checks
-
-    // Initials
-    State new_state;
-    new_state.reserve(state.size() * 2);
-    // Loop through state
-    for (const auto& [basis_state, coeff] : state) {
-        // Check for P0
-        bool k_val = (basis_state >> k[0]) & 1ULL;
-        bool skip = false;
-        for (int i = 0; i < k.size(); i++) {
-            if (((basis_state >> k[i]) & 1ULL) != k_val) skip = true;
-            if (((basis_state >> l[i]) & 1ULL) == k_val) skip = true;
-        }
-        if (skip) {
-            new_state[basis_state] += coeff;
-        } else {
-            // Compute the phase
-            int phase = 1;
-            uint64_t new_basis_state = basis_state;
-
-            // Determine operation direction:
-            // If k_val == 0, 'k' is empty and 'l' is occupied. (Applying T)
-            // If k_val == 1, 'k' is occupied and 'l' is empty. (Applying T^\dagger)
-            const std::vector<int>& annihilate_idx = (k_val == 0) ? l : k;
-            const std::vector<int>& create_idx = (k_val == 0) ? k : l;
-
-            // Apply annihilation
-            for (int idx : annihilate_idx) {
-                uint64_t mask = (1ULL << idx) - 1;
-                if (__builtin_popcountll(new_basis_state & mask) % 2 != 0) {
-                    phase = -phase;
-                }
-                new_basis_state ^= (1ULL << idx);
-            }
-
-            // Apply creation
-            for (int idx : create_idx) {
-                uint64_t mask = (1ULL << idx) - 1;
-                if (__builtin_popcountll(new_basis_state & mask) % 2 != 0) {
-                    phase = -phase;
-                }
-                new_basis_state ^= (1ULL << idx);
-            }
-
-            // Relative sign for T or -T^\dagger
-            int c = (k_val == 1) ? -1 : 1;
-
-            // update amplitudes
-            new_state[basis_state] += coeff * std::cos(theta / 2);
-            new_state[new_basis_state] += c * phase * std::sin(theta / 2) * coeff;
-        }
-    }
-    return new_state;
-}
-\end{minted}
-
-% ==========================================
 % Subsection: Fermionic Excitation Implementation
 % ==========================================
 \subsection{Fermionic Excitation Implementation}\label{subsec:fermionic-excitation-implementation}
@@ -380,7 +275,7 @@ for (const auto& [basis_state, coeff] : state) {
 
 
 % ==========================================
-% Section: Fermionic Excpectation Value
+% Section: Fermionic Expectation Value
 % ==========================================
 \section{Fermionic Expectation Value}
 Following the mathematical decomposition in Section~\ref{sec:expectation-value-evaluation}, the simulator evaluates the expectation value $\bra{\phi} H \ket{\psi}$ by accumulating the independent contributions of each Hamiltonian term:
@@ -391,7 +286,7 @@ for (const auto& term : operator_sum) {
 }
 \end{minted}
 
-For each fermionic operator string $\hat{O}_k$, \texttt{expectation\_value\_fermionic\_term} iterates exclusively over the non-zero amplitudes of $\ket{\psi}$. Annihilation and creation operators are applied in the same way as already before in chapter~\ref{subsec:fermionic-excitation-implementation}
+For each fermionic operator string $\hat{O}_k$, \texttt{expectation\_value\_fermionic\_term} iterates exclusively over the non-zero amplitudes of $\ket{\psi}$. Annihilation and creation operators are applied in the same way as already before in chapter~\ref{subsec:fermionic-excitation-implementation}.
 
 To evaluate the inner product without full matrix multiplication, the simulator projects the transformed basis state $\ket{x'_k}$ onto $\bra{\phi}$. Utilizing a hash-table lookup (\texttt{find()}) to retrieve the conjugate amplitude $d_{x'_k}^*$, directly implementing the collapsed summation:
 \begin{equation}

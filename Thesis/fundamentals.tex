@@ -9,7 +9,7 @@
 \section{Fundamentals of Quantum Information}
 This section outlines the core principles of quantum information theory, establishing the essential theoretical vocabulary necessary for navigating the complexities of quantum computation.
 
-We begin by defining the mathematical representation of quantum states. To describe composite systems consisting of multiple interacting components, we introduce the tensor product, which enables us also to represent the superpostions. Within this combined space, measure physical properties and defining interactions requires linear operators and observables. Finally, we detail the unitary operations and their underlying mathematical generators. Together, these foundational concepts provide the prerequisite knowledge required to understand the quantum formalisms discussed in subsequent chapters.
+We begin by defining the mathematical representation of quantum states. To describe composite systems consisting of multiple interacting components, we introduce the tensor product, which enables us also to represent the superpositions. Within this combined space, measure physical properties and defining interactions requires linear operators and observables. Finally, we detail the unitary operations and their underlying mathematical generators. Together, these foundational concepts provide the prerequisite knowledge required to understand the quantum formalisms discussed in subsequent chapters.
 
 % ==========================================
 % Subsection: Quantum States
@@ -93,11 +93,11 @@ Because quantum states are represented as vectors in $\mathbb{C}^n$, a linear op
     \ket{\phi} = U\ket{\psi}.
 \end{equation}
 
-Crucially, physical operations that evolve a quantum state must preserve its probability normalization. Consequently, physical evolution operators are restricted to unitary matrices, ensuring that the inner product—and thus the normalization—remains invariant
+Crucially, physical operations that evolve a quantum state must preserve its probability normalization. Consequently, physical evolution operators are restricted to unitary matrices, ensuring that the inner product—and thus the normalization—remains invariant.
 
-An \textbf{observable} represents a physical quantity of a system that can be experimentally measured. Classical examples include position, momentum, angular momentum, and energy. In an $N$-qubit system, an observable is defined mathematically as a $2^N \times 2^N$ Hermitian matrix $H$. Because the operator is Hermitian, it guarantees that all possible measurement outcomes are strictly real numbers and correspond directly to the eigenvalues of $H$. Crucially, the act of measurement fundamentally alters the system: upon obtaining a specific eigenvalue, the quantum state instantaneously collapses into the corresponding eigenstate of that observable
+An \textbf{observable} represents a physical quantity of a system that can be experimentally measured. Classical examples include position, momentum, angular momentum, and energy. In an $N$-qubit system, an observable is defined mathematically as a $2^N \times 2^N$ Hermitian matrix $H$. Because the operator is Hermitian, it guarantees that all possible measurement outcomes are strictly real numbers and correspond directly to the eigenvalues of $H$. Crucially, the act of measurement fundamentally alters the system: upon obtaining a specific eigenvalue, the quantum state instantaneously collapses into the corresponding eigenstate of that observable.
 
-Due to the inherent probabilistic nature of quantum mechanics, we generally cannot predict the outcome of a single measurement with absolute certainty. Instead, we evaluate the \textbf{expectation value}, which represents the statistical average of measured values over a large ensemble of identically prepared systems
+Due to the inherent probabilistic nature of quantum mechanics, we generally cannot predict the outcome of a single measurement with absolute certainty. Instead, we evaluate the \textbf{expectation value}, which represents the statistical average of measured values over a large ensemble of identically prepared systems.
 
 In the context of this thesis, the primary observables of interest are Hamiltonians, which represent the total energy of the physical system. Let $H$ be the Hamiltonian. We conventionally assume that its resulting energy eigenvalues are ordered from the ground state upwards ($E_0 \le E_1 \le E_2 \le \dots$), satisfying the eigenvalue equation:
 \begin{equation}
@@ -131,7 +131,7 @@ where $\theta$ is a real-valued scalar parameter (such as a time or rotation ang
 % Section: Fermionic Many-Body Systems
 % ==========================================
 \section{Fermionic Many-Body Systems}
-Fermions are fundamental particles such as electrons, protons, and neutrons, constitute the primary building blocks of matter. In the context of computational many-body physics, the challenge of simulating these systems lies not in their isolated particle properties, but in the collective quantum mechanical rules governing their many-body dynamics. Specifically, a simulation must describe the rules of fermions and their interactions accurately.
+Fermions, such as electrons, protons, and neutrons, are fundamental particles that constitute the primary building blocks of matter. In the context of computational many-body physics, the challenge of simulating these systems lies not in their isolated particle properties, but in the collective quantum mechanical rules governing their many-body dynamics. Specifically, a simulation must describe the rules of fermions and their interactions accurately.
 \cite[chapter 6.1]{benito_kottmann_qc_2025}
 
 % ==========================================
@@ -151,7 +151,7 @@ In many-body quantum mechanics, systems of identical particles are tightly const
 
 \textbf{Antisymmetric Wavefunctions:} Fermions are strictly governed by totally antisymmetric wavefunctions. Consequently, exchanging the spatial and spin coordinates of any two identical fermions introduces a global phase factor of $-1$ to the wavefunction. The Pauli Exclusion Principle is a direct mathematical corollary of this antisymmetry; if two identical fermions were to occupy the identical quantum state, their exchange would require the wavefunction to equal its own negative, implying the wavefunction must identically vanish.
 
-\textbf{Symmetric Wavefunctions:} Bosons, conversely, are described by totally symmetric wavefunctions. Exchanging any two identical bosons yields a phase factor of $+1$, leaving the wavefunction fundamentally unaltered. Free from the antisymmetric cancellation constraints that restrict fermions, identical bosons can condense into the same quantum state.
+\textbf{Symmetric Wavefunctions:} Bosons, conversely, are described by totally symmetric wavefunctions, but are outside the scope of this work.
 
 \cite[chapter 7.1, 7.2]{sakurai2020modern}
 \cite[chapter 6.1]{benito_kottmann_qc_2025}
@@ -160,19 +160,13 @@ In many-body quantum mechanics, systems of identical particles are tightly const
 % Subsection: Pauli Exclusion Principle
 % ==========================================
 \subsection{Pauli Exclusion Principle}
-The Pauli Exclusion Principle, formulated by Wolfgang Pauli in 1925, is a direct physical consequence of the indistinguishability applied specifically to fermions. It establishes that no two identical fermions can simultaneously occupy the exact same quantum state within a given system. Originally conceptualized to explain atomic electron configurations, where no two electrons can share the same four quantum numbers, this principle is a defining, characteristic of fermionic behavior. This exclusion must be preserved. Any application of creation ($a_i^\dagger$) or annihilation ($a_i$) operators must naturally prevent multiple occupancies. \cite[chapter 7.1, 7.2]{sakurai2020modern}
-
-% ==========================================
-% Subsection: fSwap
-% ==========================================
-\subsection{fSwap}
-
+The Pauli Exclusion Principle, formulated by Wolfgang Pauli in 1925, is a direct physical consequence of the indistinguishability applied specifically to fermions. It establishes that no two identical fermions can simultaneously occupy the exact same quantum state within a given system. Originally conceptualized to explain atomic electron configurations, where no two electrons can share the same four quantum numbers, this principle is a defining characteristic of fermionic behavior. This exclusion must be preserved. Any application of creation ($a_i^\dagger$) or annihilation ($a_i$) operators must naturally prevent multiple occupancies. \cite[chapter 7.1, 7.2]{sakurai2020modern}
 
 % ==========================================
 % Section: The Second Quantization Framework
 % ==========================================
 \section{The Second Quantization Framework}
-In the first quantization formalism, describing a many-body fermionic system requires the explicit construction of fully antisymmetric wavefunctions. As the number of particles increases, tracking the coordinates of individual indistinguishable particles becomes hard to deal. The second quantization framework fundamentally resolves this bottleneck. Rather than defining explicit wavefunctions for individual particles, it shifts the perspective to the occupation of predefined single-particle states within a Fock space. Particle indistinguishability and wavefunction antisymmetry are not discarded, they are rather embedded directly into the anticommutation algebra of the fermionic creation and annihilation operators. This provides a scalable, operator-driven foundation.
+In the first quantization formalism, describing a many-body fermionic system requires the explicit construction of fully antisymmetric wavefunctions. As the number of particles increases, tracking the coordinates of individual indistinguishable particles becomes intractable. The second quantization framework fundamentally resolves this bottleneck. Rather than defining explicit wavefunctions for individual particles, it shifts the perspective to the occupation of predefined single-particle states within a Fock space. Particle indistinguishability and wavefunction antisymmetry are not discarded, they are rather embedded directly into the anticommutation algebra of the fermionic creation and annihilation operators. This provides a scalable, operator-driven foundation.
 
 \cite[chapter 2.1]{schleich2025quantum}
 \cite[chapter 6.5]{benito_kottmann_qc_2025}
@@ -190,7 +184,7 @@ Because this space utilizes the second quantization formalism, it does not track
 \end{equation}
 In this notation, each index $i$ corresponds to a specific single-particle state (or spin-orbital), and $n_i$ denotes its respective occupation number. Note that due to the Pauli exclusion principle, the occupation number for fermions is strictly restricted to $n_i \in \{0, 1\}$.
 
-To illustrate this representation, we can define several fundamental states. The vacuum state, representing a system empty system without any particles, is denoted as:
+To illustrate this representation, we can define several fundamental states. The vacuum state, representing an empty system without any particles, is denoted as:
 \begin{equation}
     \ket{0, 0, \dots, 0, \dots} = \ket{\boldsymbol{0}}.
 \end{equation}
@@ -205,7 +199,7 @@ More complex, multi-particle states are systematically generated by applying cre
 % ==========================================
 % Subsection: Fermionic Operators
 % ==========================================
-\subsection{Fermionc Operators}
+\subsection{Fermionic Operators}
 In quantum mechanics, a many-body system of identical particles is described using the formalism of second quantization. Within this framework, the physical state of a system is manipulated via fundamental mathematical tools known as creation ($\hat{a}_k^\dagger$) and annihilation ($\hat{a}_k$) operators. These operators act directly upon a quantum state: $\hat{a}_k^\dagger$ creates a fermion in a specific spin-orbital $k$, while $\hat{a}_k$ destroys a fermion in that same orbital. Because fermions inherently obey the Pauli Exclusion Principle, these operators naturally enforce strict physical boundaries; applying a creation operator to an already occupied orbital, or an annihilation operator to an empty one, identically annihilates the wavefunction (yielding zero). These characteristics can be noted down as:
 \begin{align}
     \hat{a} |0\rangle &= 0, \\
@@ -236,7 +230,7 @@ In contrast, fermionic creation ($\hat{a}_i^\dagger$) and annihilation ($\hat{a}
 \begin{equation}
     \{\hat{a}_i^\dagger, \hat{a}_j^\dagger\} = \hat{a}_i^\dagger \hat{a}_j^\dagger + \hat{a}_j^\dagger \hat{a}_i^\dagger = 0 \quad \Rightarrow \quad \hat{a}_i^\dagger \hat{a}_j^\dagger = -\hat{a}_j^\dagger \hat{a}_i^\dagger
 \end{equation}
-This chrectersitc is needed to preserve wavefunction antisymmetry and enforce the Pauli Exclusion Principle.
+This characteristic is needed to preserve wavefunction antisymmetry and enforce the Pauli Exclusion Principle.
 
 \cite[chapter 3.11.1, 7.1, 7.7]{sakurai2020modern}
 \cite[chapter 1.]{Kottmann2025}
@@ -281,7 +275,7 @@ When evaluated against a quantum state, these non-local parity strings ($\hat{\s
 \section{Simulating Excitations}
 In quantum mechanics, an excitation describes the transition of a particle, such as an electron, from a lower-energy orbital to a higher-energy state. Within the context of computational many-body physics, these phenomena can manipulate the quantum state of the system.
 
-We saw before that fermions differ from qubits, also in the defintion of the excitation of the both particle groups differences can be seen. In both cases, excitations are enacted via unitary evolution operators; however, the explicit construction of the underlying mathematical generators must be changed to obey the respective commutation or anticommutation rules of the system. This is detailed in this section.
+We saw before that fermions differ from qubits, also in the definition of the excitation of both particle groups. In both cases, excitations are enacted via unitary evolution operators; however, the explicit construction of the underlying mathematical generators must be changed to obey the respective commutation or anticommutation rules of the system. This is detailed in this section.
 
 
 % ==========================================
@@ -294,13 +288,13 @@ Mathematically, a single-qubit excitation describing a transition between an occ
 \begin{equation}
     U_{i}^{b}(\theta) = e^{\theta \left(\hat{\sigma}^+_{b}\hat{\sigma}^-_{i} - \hat{\sigma}^+_{i}\hat{\sigma}^-_{b}\right)}.\label{eq:qubit_exc_unitary_def}
 \end{equation}
-This can be equivalently expressed in terms of standard Pauli matrices (absorbing the scalar factors into the rotation parameter $\theta$) as (see appendix for algebraically derivation):
+This can be equivalently expressed in terms of standard Pauli matrices (absorbing the scalar factors into the rotation parameter $\theta$) as (see appendix for an algebraic derivation):
 \begin{equation}
     U_{i}^{b}(\theta) = e^{-i\theta \left(\hat{\sigma}^b_{x}\hat{\sigma}^i_{y} - \hat{\sigma}^b_{y}\hat{\sigma}^i_{x}\right)}.\label{eq:quibt_exc_unitary_derivation}
 \end{equation}
 Note that $\hat{\sigma}_{x}$ and $\hat{\sigma}_{y}$ refers to the Pauli-X and Pauli-Y operators. This unitary operator acts locally on the target qubits, functioning as a rotation matrix exclusively within the $\{\ket{01}, \ket{10}\}$ subspace to swap the occupation states.
 
-\cite[Chapter IV.A.1.b.]{anand2022quantum}
+\cite[chapter IV.A.1.b.]{anand2022quantum}
 
 This concept naturally extends to higher-order excitations. Given a set of target orbitals denoted by the vector $\boldsymbol{k}$, and a set of occupied orbitals denoted by $\boldsymbol{l}$, the multi-qubit excitation generator is constructed directly from products of the corresponding raising and lowering operators:
 \begin{equation}

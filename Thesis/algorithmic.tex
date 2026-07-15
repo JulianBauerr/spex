@@ -41,7 +41,7 @@ Finally, this term induces an amplitude update on the newly acquired partner sta
 \begin{equation}
 	c_{\boldsymbol{i'}} \leftarrow c_{\boldsymbol{i'}} + c \sin\left(\frac{\theta}{2}\right). \label{eq:qubit-excitation-partner-state-update-phase}
 \end{equation}
-\cite[Chapter II.A]{kottmann2020feasible}
+\cite[chapter II.A]{kottmann2020feasible}
 
 % ==========================================
 % Subsection: Incorporating the Fermionic Phase
@@ -72,7 +72,10 @@ Finally, note that the distinct computational advantage of this classical approa
 % Section: Fermionic SWAP (fSWAP)
 % ==========================================
 \section{Fermionic SWAP (fSWAP)}
-Routing and reordering fermionic orbitals requires the fermionic SWAP (fSWAP) gate to preserve anticommutation relations. In the computational basis, this gate is defined as:
+The fermionic SWAP (fSWAP) gate exchanges the occupation of two fermionic orbitals while preserving anticommutation relations. Unlike the standard qubit SWAP, which treats $\ket{11}$ symmetrically, the fSWAP gate applies a phase of $-1$ to the $\ket{11}$ state to account for the exchange phase of identical fermions. This operation is essential for orbital routing in fermionic simulations.
+
+
+Beyond the application of single excitations, the simulation of many-body fermionic systems often requires reordering fermionic orbitals to accommodate hardware constraints or algorithmic requirements. This reordering must preserve fermionic anticommutation relations and is achieved via the fermionic SWAP operation. In the computational basis, this gate is defined as:
 \begin{equation}
 	U_{\text{fSWAP}} = \begin{pmatrix}
 						   1 & 0 & 0 & 0 \\
@@ -101,5 +104,5 @@ This orthogonality collapses the double summation over basis states into a singl
 \begin{equation}
 	\bra{\phi} H \ket{\psi} = \sum_k w_k \sum_{x} d_{x'_k}^* p_{k,x} c_x\label{eq:expectation-value-decomposed}
 \end{equation}
-Algorithmatically, resolving $\ket{x'_k}$ via bitwise manipulations allows the simulator to evaluate observables without constructing dense matrix operators.
+Algorithmically, resolving $\ket{x'_k}$ via bitwise manipulations allows the simulator to evaluate observables without constructing dense matrix operators.
 \cite[chapter II.A, II.B]{kohda2022quantum}
