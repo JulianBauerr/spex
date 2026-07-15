@@ -68,5 +68,38 @@ Finally, note that the distinct computational advantage of this classical approa
 \cite[chapter III.B]{anand2022quantum}
 \cite[chapter 2.1.1]{schleich2025quantum}
 
+% ==========================================
+% Section: Fermionic SWAP (fSWAP)
+% ==========================================
+\section{Fermionic SWAP (fSWAP)}
+Routing and reordering fermionic orbitals requires the fermionic SWAP (fSWAP) gate to preserve anticommutation relations. In the computational basis, this gate is defined as:
+\begin{equation}
+	U_{\text{fSWAP}} = \begin{pmatrix}
+						   1 & 0 & 0 & 0 \\
+						   0 & 0 & 1 & 0 \\
+						   0 & 1 & 0 & 0 \\
+						   0 & 0 & 0 & -1
+	\end{pmatrix}
+\end{equation}
+The negative phase on the $|11\rangle$ element enforces the required exchange sign when swapping two occupied orbitals.
 
+\cite[chapter II.]{Verstraete2009quantum}
 
+% ==========================================
+% Section: Expectation Value Evaluation
+% ==========================================
+\section{Expectation Value Evaluation}\label{sec:expectation-value-evaluation}
+Extracting physical observables requires evaluating transition matrix elements $\bra{\phi} H \ket{\psi}$. Decomposing the Hamiltonian into a linear combination of fermionic operator strings $H = \sum_k w_k \hat{O}_k$, and expanding the state vectors in the $2^N$-dimensional computational basis ($\ket{\psi} = \sum_x c_x \ket{x}$ and $\bra{\phi} = \sum_y d_y^* \bra{y}$), yields for each operator term $\hat{O}_k$:
+\begin{equation}
+	\bra{\phi} \hat{O}_k \ket{\psi} = \sum_{x} \sum_{y} d_y^* c_x \bra{y} \hat{O}_k \ket{x}
+\end{equation}
+Applying a fermionic operator string $\hat{O}_k$ to a basis state $\ket{x}$ either annihilates the state, if the operation violates Pauli exclusion, or maps it to a single new basis state $\ket{x'_k}$ with an accumulated parity phase $p_{k,x} \in \{-1, 1\}$, such that $\hat{O}_k \ket{x} = p_{k,x} \ket{x'_k}$. Due to basis orthonormality, the inner product evaluates to a Kronecker delta:
+\begin{equation}
+	\bra{y} \ket{x'_k} = \delta_{y, x'_k} = \begin{cases} 1 & \text{if } y = x'_k \\ 0 & \text{if } y \neq x'_k \end{cases}
+\end{equation}
+This orthogonality collapses the double summation over basis states into a single linear sum over the non-zero amplitudes of $\ket{\psi}$. The total expectation value is thus computed as:
+\begin{equation}
+	\bra{\phi} H \ket{\psi} = \sum_k w_k \sum_{x} d_{x'_k}^* p_{k,x} c_x\label{eq:expectation-value-decomposed}
+\end{equation}
+Algorithmatically, resolving $\ket{x'_k}$ via bitwise manipulations allows the simulator to evaluate observables without constructing dense matrix operators.
+\cite[chapter II.A, II.B]{kohda2022quantum}

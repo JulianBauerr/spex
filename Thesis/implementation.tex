@@ -262,7 +262,7 @@ Putting all toegther we get:
 % ==========================================
 % Subsection: Fermionic Excitation Implementation
 % ==========================================
-\subsection{Fermionic Excitation Implementation}
+\subsection{Fermionic Excitation Implementation}\label{subsec:fermionic-excitation-implementation}
 Building upon the matrix-free evolution framework from Section \ref{sec:matrix-free-direct-state-evolution}, implementing fermionic excitations requires incorporating anticommutation phase logic. While the structural state evolution remains identical to the qubit baseline, the generator action must account for fermionic statistics.
 
 Following the nullspace check, the occupation of the first target orbital (\texttt{k\_val}) determines the direction of the operator (i.e., whether $T$ or $T^\dagger$ is applied):
@@ -352,8 +352,61 @@ State apply_fermion_excitation(const State& state, const std::vector<int>& k,
 }
 \end{minted}
 
+% ==========================================
+% Section: fSWAP
+% ==========================================
+\section{fSWAP Implementation}
+To avoid constructing the dense operator matrix, the simulator evaluates the fSWAP gate directly on the state vector. Iterating exclusively over the non-zero amplitudes reduces time and memory complexity. Bitwise shifts and XOR masks manipulate orbital occupancies directly, maximizing execution speed and avoiding unnecessary memory allocations:
+
+\begin{minted}{cpp}
+const uint64_t mask_i = 1ULL << i;
+const uint64_t mask_j = 1ULL << j;
+
+for (const auto& [basis_state, coeff] : state) {
+    const bool bit_i = (basis_state >> i) & 1ULL;
+    const bool bit_j = (basis_state >> j) & 1ULL;
+
+    if (bit_i == bit_j) {
+        // |00⟩ → |00⟩, |11⟩ → -|11⟩
+        const double phase = bit_i ? -1.0 : 1.0;
+        new_state[basis_state] += phase * coeff;
+    } else {
+        // |01⟩ ↔ |10⟩: apply XOR bit-swap
+        const uint64_t swapped = basis_state ^ mask_i ^ mask_j;
+        new_state[swapped] += coeff;
+    }
+}
+\end{minted}
+
 
 % ==========================================
-% Subsection: other efficient Extensions
+% Section: Fermionic Excpectation Value
 % ==========================================
-\subsection{other Extensions}
+\section{Fermionic Expectation Value}
+Following the mathematical decomposition in Section~\ref{sec:expectation-value-evaluation}, the simulator evaluates the expectation value $\bra{\phi} H \ket{\psi}$ by accumulating the independent contributions of each Hamiltonian term:
+
+\begin{minted}{cpp}
+for (const auto& term : operator_sum) {
+    result += expectation_value_fermionic_term(phi, psi, term);
+}
+\end{minted}
+
+For each fermionic operator string $\hat{O}_k$, \texttt{expectation\_value\_fermionic\_term} iterates exclusively over the non-zero amplitudes of $\ket{\psi}$. Annihilation and creation operators are applied in the same way as already before in chapter~\ref{subsec:fermionic-excitation-implementation}
+
+To evaluate the inner product without full matrix multiplication, the simulator projects the transformed basis state $\ket{x'_k}$ onto $\bra{\phi}$. Utilizing a hash-table lookup (\texttt{find()}) to retrieve the conjugate amplitude $d_{x'_k}^*$, directly implementing the collapsed summation:
+\begin{equation}
+    \bra{\phi} H \ket{\psi} = \sum_{k \in H} \sum_{x \in \psi} \underbrace{d_{x'_k}^*}_{\text{coeff\_phi}} \cdot \underbrace{w_k}_{\text{weight}} \cdot \underbrace{p_{k,x}}_{\text{phase}} \cdot \underbrace{c_x}_{\text{coeff\_psi}}
+\end{equation}
+
+\begin{minted}{cpp}
+auto it = phi.find(new_basis_state);
+if (it != phi.end()) {
+    const std::complex<double> coeff_phi = std::conj(it->second);
+    term_overlap += coeff_phi * (term.weight * std::complex<double>(phase, 0.0) * coeff_psi);
+}
+\end{minted}
+
+
+
+
+
