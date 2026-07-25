@@ -35,7 +35,7 @@ constexpr double TINY_RESIDUAL_CLEANUP_TOL = 1e-12;
 struct FermionTerm {
     std::vector<int> creation_idx;
     std::vector<int> annihilation_idx;
-    std::complex<double> weight;
+    std::complex<double> weight = 1.0;
 
     /**
      * Return a Fermion string representation.
@@ -506,7 +506,6 @@ State apply_fswap(const State& state, int i, int j) {
  *
  * When |w|=0 the state is returned unchanged.
  */
-
 State apply_fermion_excitation(const State& state, const FermionTerm& term, double theta) {
     if (state.empty())
         throw std::invalid_argument("A state cannot be empty");
