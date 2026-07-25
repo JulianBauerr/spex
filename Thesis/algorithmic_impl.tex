@@ -1,0 +1,371 @@
+\chapter{Algorithmic Design and Implementation}
+\label{c:algorithmic-impl}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ==========================================
+% Section: Core Data Structures
+% ==========================================
+\section{Core Data Structures}
+To construct the foundation of the simulator, we must first define the core data structures that map the mathematical framework into efficient computational memory.
+
+% ==========================================
+% Subsection: Defining the State
+% ==========================================
+\subsection{Defining the State}
+As established in Sections~\ref{subsec:quantum-states} and~\ref{subsec:tensor-products}, a quantum state is represented as a linear combination of orthogonal basis states $\ket{i}$ and their corresponding complex probability amplitudes $c_i$. Computationally, simulating these many-body states requires a data structure optimized for rapid access and modification. This is particularly crucial because, during generator-based evolution, the algorithm must dynamically retrieve and manipulate specific pairs of interacting basis states.
+
+To represent the fermionic Fock states, we use the occupation number representation defined in Equation \eqref{eq:occupation_number_representation}. Because fermions obey the Pauli exclusion principle, a given orbital is either strictly empty or occupied. This binary nature maps perfectly to a bitstring. In C++, this is naturally and efficiently encoded as an unsigned 64-bit integer (\texttt{uint64\_t}). Utilizing native integer types allows the simulator to execute optimized, hardware-level bitwise operations when applying creation and annihilation operators. For the associated probability amplitudes, we utilize the standard library's double-precision complex type, \texttt{std::complex<double>}, ensuring robust numerical stability during phase accumulations.
+
+To bind the basis states to their amplitudes, we require a structure that supports dynamic sizing and fast lookups. Rather than relying on dense arrays---which would scale exponentially and store unnecessary zero-amplitude states---we implement a sparse representation using a hash map. Specifically, we utilize the \texttt{ankerl::unordered\_dense::map}. Unlike the standard \texttt{std::unordered\_map}, this optimized library provides a cache-friendly, contiguous memory layout.
+
+Combining these architectural choices, the complete quantum state is elegantly defined via a single type alias:
+
+\begin{minted}{cpp}
+    using State = ankerl::unordered_dense::map<uint64_t, std::complex<double>>;
+\end{minted}
+
+% ==========================================
+% Subsection: Defining the Generators and Hamiltonian
+% ==========================================
+\subsection{Defining the Generators and Hamiltonian}
+Evaluating excitation generators \eqref{eq:mult_fe_exc_generator} and Hamiltonian expectation values requires a standardized representation for second-quantized operators. The \texttt{FermionTerm} structure encodes creation and annihilation orbital indices using integer vectors. To support arbitrary fermionic operators beyond standard excitations, it also includes a complex scalar \texttt{weight}.
+\begin{minted}{cpp}
+    struct FermionTerm {
+        std::vector<int> creation_idx;
+        std::vector<int> annihilation_idx;
+        std::complex<double> weight = 1.0;
+    };
+\end{minted}
+
+
+% ==========================================
+% Section: Matrix-Free Direct State Evolution
+% ==========================================
+\section{Matrix-Free Direct State Evolution}\label{sec:matrix-free-direct-state-evolution}
+The core computational challenge in simulating many-body quantum systems lies in the efficient application of excitation operators to the underlying state vector. Constructing and applying global unitary matrices is highly memory-prohibitive for large Hilbert spaces. Therefore, the simulator leverages a direct state-vector approach, exploiting the algebraic properties of the excitation generator to execute updates directly on the computational basis.
+
+To translate this theoretical framework into a high-performance algorithmic routine, we must deconstruct the evaluation of the unitary operation. As an initial step, we isolate the fundamental mechanics by considering the qubit excitation framework. This isolated model provides a computational baseline that is then subsequently generalized to incorporate fermionic anticommutation relations.
+
+
+% ==========================================
+% Subsection: Qubit Baseline
+% ==========================================
+\subsection{Qubit Baseline}\label{subsec:qubit-baseline}
+Rather than relying on computationally prohibitive full matrix exponentiation to evaluate the time-evolution operator $U = \exp(\sum \theta \hat{E})$, the direct state evolution approach exploits the algebraic properties of the generator to execute localized state updates. To compute the excitation efficiently, we must simplify the evaluation of the unitary operation. As an initial simplification, we consider the qubit excitation framework, which can later be generalized to account for fermionic differences.
+
+Consider an initial quantum state upon which the excitation is applied. Recalling the generalized generator from Equation \eqref{eq:mult_qu_exc_generator}, the operation is fully defined by the orbital sets $\boldsymbol{k}$ and $\boldsymbol{l}$, expressing which electrons are exchanged. With these target orbitals and the initial state, the algorithm possesses all the necessary parameters. Given the generator $G^{\boldsymbol{k}}_{\boldsymbol{l}}$, the unitary operator can be expanded as:
+\begin{equation}
+	U(\theta) = e^{-i\frac{\theta}{2}G^{\boldsymbol{k}}_{\boldsymbol{l}}} = \cos\left(\frac{\theta}{2}\right) I - i\sin\left(\frac{\theta}{2}\right)G^{\boldsymbol{k}}_{\boldsymbol{l}} + \left(1 - \cos\left(\frac{\theta}{2}\right)\right) P_0.
+\end{equation}
+Here, $P_0$ represents the projector onto the nullspace of the generator $G^{\boldsymbol{k}}_{\boldsymbol{l}}$. This nullspace is spanned by all computational basis states $\ket{\boldsymbol{i}}$ for which $G^{\boldsymbol{k}}_{\boldsymbol{l}} \ket{\boldsymbol{i}} = 0$.
+
+When applied to a specific electronic configuration $\ket{\Phi}$, the unitary transformation acts trivially (as the identity operator) if the configuration resides within the nullspace of the generator. Otherwise, it induces a rotation between the original configuration and the $n$-fold excited configuration:
+\begin{equation} \label{eq:qubit-excitation-unitary-transformation-configuration-differences}
+	\qubitExcitationUnitaryTransformationConfigurationDifferences
+\end{equation}
+
+To implement the active transformation algorithmically, we examine the two components of the rotational term. The first term, governed by $\cos\left(\frac{\theta}{2}\right) I$, is computationally straightforward. It is expressed as a direct scaling of the initial state's probability amplitude, which can be expressed algorithmically as an update:
+\begin{equation}
+	c_{\boldsymbol{i}} \leftarrow c_{\boldsymbol{i}} \cos\left(\frac{\theta}{2}\right).\label{eq:qubit-excitation-update-basis-state}
+\end{equation}
+
+The second component of the rotation governs the coupling and is more complex as it involves the explicit action of the generator. The term $-i\sin\left(\frac{\theta}{2}\right)G^{\boldsymbol{k}}_{\boldsymbol{l}}$ can be decomposed into two distinct operational steps. First, the algorithm computes the partner state $\ket{\boldsymbol{i'}}$ resulting from the generator's application onto the basis state:
+\begin{align}
+	c \ket{\boldsymbol{i'}} &= -iG^{\boldsymbol{k}}_{\boldsymbol{l}} \ket{\boldsymbol{i}}, \label{eq:qubit-excitation-baseline-partner-state-1} \\
+	-iG^{\boldsymbol{k}}_{\boldsymbol{l}} &= \left( \prod_n \sigma^-_{k_n} \sigma^+_{l_n} - \text{h.c.} \right). \label{eq:qubit-excitation-baseline-partner-state-2}
+\end{align}
+Here, the partner state $\ket{\boldsymbol{i'}}$ represents the specific electronic configuration generated by the excitation, which is also introduced into the superposition. By absorbing the factor of $-i$ into the generator's evaluation, the transitional coefficient $c$ is restricted to purely real values and even $c = \pm 1$. The sign of $c$ depends strictly on the directionality of the particle exchange (i.e., whether the operation acts as an excitation or de-excitation on the specific state).
+
+Finally, this term induces an amplitude update on the newly acquired partner state. The corresponding probability amplitude is updated as:
+\begin{equation}
+	c_{\boldsymbol{i'}} \leftarrow c_{\boldsymbol{i'}} + c \sin\left(\frac{\theta}{2}\right). \label{eq:qubit-excitation-partner-state-update-phase}
+\end{equation}
+\cite[chapter II.A]{kottmann2020feasible}
+
+% --- Implementation ---
+
+The C++ implementation requires three parameters: the initial quantum state, the orbital sets $\boldsymbol{k}$ and $\boldsymbol{l}$, and the rotation angle $\theta$. To avoid unnecessary memory allocations, the orbital sets are passed as constant references to standard integer vectors (\texttt{std::vector<int>}):
+
+\begin{minted}{cpp}
+State apply_qubit_excitation(const State& state, const std::vector<int>& k, const std::vector<int>& l, const double theta)
+\end{minted}
+
+Memory for the output map is preallocated to establish a baseline capacity, minimizing dynamic reallocations. The core algorithm then iterates over all non-zero basis states using structured bindings, allowing direct reference-based extraction of the basis state and its amplitude:
+
+\begin{minted}{cpp}
+    for (const auto& [basis_state, coeff] : state)
+\end{minted}
+
+Before performing floating-point arithmetic or allocating new state entries, the simulator evaluates the nullspace projector $P_0$ using bitwise operations. A basis state belongs to the active space if and only if all orbitals in $\boldsymbol{k}$ are uniformly occupied while all orbitals in $\boldsymbol{l}$ are uniformly unoccupied, or vice versa. Because the basis state is encoded as a \texttt{uint64\_t}, this condition is evaluated with bit shifting and masking:
+
+\begin{minted}{cpp}
+    bool k_val = (basis_state >> k[0]) & 1ULL;
+    bool skip = false;
+    for (size_t i = 0; i < k.size(); i++) {
+        if (((basis_state >> k[i]) & 1ULL) != k_val) skip = true;
+        if (((basis_state >> l[i]) & 1ULL) == k_val) skip = true;
+    }
+\end{minted}
+
+States in the nullspace undergo no rotation and are copied into the output map unchanged. For basis states in the active space, the simulator first scales the original amplitude:
+
+\begin{minted}{cpp}
+    std::complex<double> c_ibs = coeff * std::cos(theta / 2);
+\end{minted}
+
+The partner basis state is then computed by toggling the bits at the orbital positions. Since the state is confirmed to be in the active space, applying a bitwise XOR correctly removes and adds electrons at the respective orbitals:
+
+\begin{minted}{cpp}
+    uint64_t partner_basis_state = basis_state;
+    for (int i = 0; i < k.size(); i++) {
+        partner_basis_state ^= (1ULL << k[i]);
+        partner_basis_state ^= (1ULL << l[i]);
+    }
+\end{minted}
+
+The direction of the excitation, stored in $c$, is determined by checking the occupancy of the first orbital in the $\boldsymbol{k}$ set:
+
+\begin{minted}{cpp}
+    int c = (basis_state >> k[0]) & 1ULL ? 1 : -1;
+\end{minted}
+
+The amplitude of the newly acquired partner state is then updated with the $\sin(\theta/2)$ contribution:
+
+\begin{minted}{cpp}
+    std::complex<double> c_ipbs = c * std::sin(theta/2) * coeff;
+\end{minted}
+
+Combining these components yields the complete qubit excitation function:
+
+\begin{minted}{cpp}
+    State apply_qubit_excitation(const State& state, const std::vector<int>& k, const std::vector<int>& l, const double theta) {
+    // Initials
+    State new_state;
+    new_state.reserve(state.size() * 2);
+    // Loop through state
+    for (const auto& [basis_state, coeff] : state) {
+        // Check for P0
+        bool k_val = (basis_state >> k[0]) & 1ULL;
+        bool skip = false;
+        for (int i = 0; i < k.size(); i++) {
+            if (((basis_state >> k[i]) & 1ULL) != k_val) skip = true;
+            if (((basis_state >> l[i]) & 1ULL) == k_val) skip = true;
+        }
+        if (skip) {
+            // Nullspace
+            new_state[basis_state] += coeff;
+        } else {
+            // Active Space - Implement excitation
+            std::complex<double> c_ibs = coeff * std::cos(theta / 2);
+            uint64_t partner_basis_state = basis_state;
+            for (int i = 0; i < k.size(); i++) {
+                partner_basis_state ^= (1ULL << k[i]);
+                partner_basis_state ^= (1ULL << l[i]);
+            }
+            int c = (basis_state >> k[0]) & 1ULL ? 1 : -1;
+            std::complex<double> c_ipbs = c * std::sin(theta/2) * coeff;
+
+            new_state[basis_state] += c_ibs;
+            new_state[partner_basis_state] += c_ipbs;
+        }
+    }
+    return new_state;
+}
+\end{minted}
+
+% ==========================================
+% Subsection: Incorporating the Fermionic Phase
+% ==========================================
+\subsection{Incorporating the Fermionic Phase}\label{subsec:incorporating-the-fermionic-phase}
+\label{subsec:fermionic-excitation-implementation}
+
+While the foundational baseline algorithm effectively handles qubit-based rotations, it is inherently insufficient for simulating the characteristics of true fermionic many-body systems. To accurately model fermions, the computational routine must replace the qubit excitation generator with its fermionic counterpart, the multi-excitation generator $G_{\boldsymbol{pq}}$, as defined in Equation \eqref{eq:mult_fe_exc_generator}.
+
+Within a classical simulation framework, direct access to the state vector enables the evaluation of fermionic excitations without mapping to qubit Pauli operators. By representing computational basis states as Fock space occupation vectors $\ket{\mathbf{n}} = \ket{n_0, n_1, \dots, n_{M-1}}$ with $n_i \in \{0, 1\}$, the algebraic action of second-quantized fermionic creation ($a_k^\dagger$) and annihilation ($a_k$) operators can be defined directly on the basis states.
+
+The fermionic anticommutation relations dictate that acting on a target spin-orbital $k$ introduces a parity phase determined by the total occupation of all preceding orbitals in the canonical ordering. Algebraically, the action of these operators on a Fock state $\ket{\mathbf{n}}$ is expressed as:
+\begin{align} \label{eq:annhiliation-creation-algebraic-definition}
+	a_k \ket{\mathbf{n}} &= \delta_{n_k, 1} (-1)^{\sum_{j=0}^{k-1} n_j} \ket{n_0, \dots, n_k - 1, \dots, n_{M-1}}, \\
+	a_k^\dagger \ket{\mathbf{n}} &= \delta_{n_k, 0} (-1)^{\sum_{j=0}^{k-1} n_j} \ket{n_0, \dots, n_k + 1, \dots, n_{M-1}},
+\end{align}
+where $\delta$ denotes the Kronecker delta, enforcing the Pauli exclusion principle. The phase factor $(-1)^{\sum_{j=0}^{k-1} n_j}$ evaluates to $+1$ for an even preceding occupation count and $-1$ for an odd count.
+
+To evaluate an arbitrary $n$-fold excitation, the constituent operators are applied sequentially. For each operator targeting index $k$, the parity phase is computed against the instantaneous state vector. By updating the occupation value $n_k \mapsto 1 - n_k$ immediately after each valid operator application, this algebraic formulation tracks all necessary anticommutation phases natively, eliminating the need for Jordan-Wigner parity strings.
+
+This fundamental difference in dynamic behavior enforces the strict antisymmetry required of fermionic wavefunctions, originating from the Pauli exclusion principle. Algorithmically, it can be recognized that the nullspace projector $P_0$ acts purely based on the occupancy of the initial and target orbitals, ignoring intermediate phase dynamics. Therefore, the correct evaluation of the active state rotation relies entirely on accurately tracking and applying this classically computed parity phase.
+
+Finally, note the distinct computational advantage of this classical approach. Implementing the fermionic phase switch on physical quantum hardware is notoriously complex; applying long chains of Pauli-Z operators requires deep CNOT ladders, which introduce significant gate overhead and noise. By determining the phase algebraically through direct state occupation counting, our simulator bypasses this physical bottleneck.
+
+\cite[chapter III.B]{anand2022quantum}
+\cite[chapter 2.1.1]{schleich2025quantum}
+
+% --- Implementation ---
+
+The C++ implementation follows the same structural pattern as the qubit baseline but adds the anticommutation phase logic. Following the nullspace check, the occupation of the first orbital determines the direction of the operator:
+
+\begin{minted}{cpp}
+    bool k_val = (basis_state >> k[0]) & 1ULL;
+\end{minted}
+
+Because the state is guaranteed to be within the active space by the nullspace projector, this single bit determines the operation roles: if \texttt{k\_val} is 0, set $\boldsymbol{k}$ corresponds to creation operators and set $\boldsymbol{l}$ to annihilation operators, and vice versa:
+
+\begin{minted}{cpp}
+    const std::vector<int>& annihilate_idx = (k_val == 0) ? l : k;
+    const std::vector<int>& create_idx = (k_val == 0) ? k : l;
+\end{minted}
+
+The algebraic action from Eq.~\eqref{eq:annhiliation-creation-algebraic-definition} is evaluated by computing the parity phase for each operator. The parity phase $(-1)^{\sum_{j=0}^{k-1} n_j}$ is computed by generating a bitmask of the preceding orbitals and counting set bits using the hardware-accelerated \texttt{\_\_builtin\_popcountll}. If the resulting count is odd, the global phase is inverted. The orbital state is subsequently flipped using a bitwise XOR:
+
+\begin{minted}{cpp}
+    for (int idx : annihilate_idx) {
+        uint64_t mask = (1ULL << idx) - 1;
+        if (__builtin_popcountll(new_basis_state & mask) % 2 != 0) {
+            phase = -phase;
+        }
+        new_basis_state ^= (1ULL << idx);
+    }
+\end{minted}
+
+Creation operators are applied identically on the \texttt{create\_idx} set. The relative sign $c$ and the trigonometric updates complete the transformation:
+
+\begin{minted}{cpp}
+    int c = (k_val == 1) ? -1 : 1;
+\end{minted}
+
+The complete function integrates the nullspace projection, phase tracking, and amplitude updates:
+
+\begin{minted}{cpp}
+State apply_fermion_excitation(const State& state, const std::vector<int>& k,
+                               const std::vector<int>& l, const double theta) {
+    State new_state;
+    new_state.reserve(state.size() * 2);
+
+    for (const auto& [basis_state, coeff] : state) {
+        // Nullspace projector (P0 check)
+        bool k_val = (basis_state >> k[0]) & 1ULL;
+        bool skip = false;
+        for (size_t i = 0; i < k.size(); i++) {
+            if (((basis_state >> k[i]) & 1ULL) != k_val) skip = true;
+            if (((basis_state >> l[i]) & 1ULL) == k_val) skip = true;
+        }
+
+        if (skip) {
+            new_state[basis_state] += coeff;
+        } else {
+            int phase = 1;
+            uint64_t new_basis_state = basis_state;
+
+            // Determine operator direction (T vs T^\dagger)
+            const std::vector<int>& annihilate_idx = (k_val == 0) ? l : k;
+            const std::vector<int>& create_idx = (k_val == 0) ? k : l;
+
+            // Apply annihilation operators sequentially
+            for (int idx : annihilate_idx) {
+                uint64_t mask = (1ULL << idx) - 1;
+                if (__builtin_popcountll(new_basis_state & mask) % 2 != 0) {
+                    phase = -phase;
+                }
+                new_basis_state ^= (1ULL << idx);
+            }
+
+            // Apply creation operators sequentially
+            for (int idx : create_idx) {
+                uint64_t mask = (1ULL << idx) - 1;
+                if (__builtin_popcountll(new_basis_state & mask) % 2 != 0) {
+                    phase = -phase;
+                }
+                new_basis_state ^= (1ULL << idx);
+            }
+
+            // Relative sign for T or -T^\dagger
+            int c = (k_val == 1) ? -1 : 1;
+
+            // Update amplitudes
+            new_state[basis_state] += coeff * std::cos(theta / 2);
+            new_state[new_basis_state] += c * phase * std::sin(theta / 2) * coeff;
+        }
+    }
+    return new_state;
+}
+\end{minted}
+
+% ==========================================
+% Subsection: Fermionic SWAP (fSWAP)
+% ==========================================
+\subsection{Fermionic SWAP (fSWAP)}
+Beyond the application of single excitations, the simulation of many-body fermionic systems often requires reordering fermionic orbitals to accommodate hardware constraints or algorithmic requirements. This reordering must preserve fermionic anticommutation relations and is achieved via the fermionic SWAP operation. In the computational basis, this gate is defined as:
+\begin{equation}
+	U_{\text{fSWAP}} = \begin{pmatrix}
+						   1 & 0 & 0 & 0 \\
+						   0 & 0 & 1 & 0 \\
+						   0 & 1 & 0 & 0 \\
+						   0 & 0 & 0 & -1
+	\end{pmatrix}
+\end{equation}
+The negative phase on the $|11\rangle$ element enforces the required exchange sign when swapping two occupied orbitals.
+
+\cite[chapter II.]{Verstraete2009quantum}
+
+% --- Implementation ---
+
+To avoid constructing the dense operator matrix, the simulator evaluates the fSWAP gate directly on the state vector. Iterating exclusively over the non-zero amplitudes reduces time and memory complexity:
+
+\begin{minted}{cpp}
+const uint64_t mask_i = 1ULL << i;
+const uint64_t mask_j = 1ULL << j;
+
+for (const auto& [basis_state, coeff] : state) {
+    const bool bit_i = (basis_state >> i) & 1ULL;
+    const bool bit_j = (basis_state >> j) & 1ULL;
+
+    if (bit_i == bit_j) {
+        // |00> -> |00>, |11> -> -|11>
+        const double phase = bit_i ? -1.0 : 1.0;
+        new_state[basis_state] += phase * coeff;
+    } else {
+        // |01> <-> |10>: apply XOR bit-swap
+        const uint64_t swapped = basis_state ^ mask_i ^ mask_j;
+        new_state[swapped] += coeff;
+    }
+}
+\end{minted}
+
+% ==========================================
+% Subsection: Expectation Value Evaluation
+% ==========================================
+\subsection{Expectation Value Evaluation}\label{sec:expectation-value-evaluation}
+Extracting physical observables requires evaluating transition matrix elements $\bra{\phi} H \ket{\psi}$. Decomposing the Hamiltonian into a linear combination of fermionic operator strings $H = \sum_k w_k \hat{O}_k$, and expanding the state vectors in the $2^N$-dimensional computational basis ($\ket{\psi} = \sum_x c_x \ket{x}$ and $\bra{\phi} = \sum_y d_y^* \bra{y}$), yields for each operator term $\hat{O}_k$:
+\begin{equation}
+	\bra{\phi} \hat{O}_k \ket{\psi} = \sum_{x} \sum_{y} d_y^* c_x \bra{y} \hat{O}_k \ket{x}
+\end{equation}
+Applying a fermionic operator string $\hat{O}_k$ to a basis state $\ket{x}$ either annihilates the state, if the operation violates Pauli exclusion, or maps it to a single new basis state $\ket{x'_k}$ with an accumulated parity phase $p_{k,x} \in \{-1, 1\}$, such that $\hat{O}_k \ket{x} = p_{k,x} \ket{x'_k}$. Due to basis orthonormality, the inner product evaluates to a Kronecker delta:
+\begin{equation}
+	\bra{y} \ket{x'_k} = \delta_{y, x'_k} = \begin{cases} 1 & \text{if } y = x'_k \\ 0 & \text{if } y \neq x'_k \end{cases}
+\end{equation}
+This orthogonality collapses the double summation over basis states into a single linear sum over the non-zero amplitudes of $\ket{\psi}$. The total expectation value is thus computed as:
+\begin{equation}
+	\bra{\phi} H \ket{\psi} = \sum_k w_k \sum_{x} d_{x'_k}^* p_{k,x} c_x\label{eq:expectation-value-decomposed}
+\end{equation}
+Algorithmically, resolving $\ket{x'_k}$ via bitwise manipulations allows the simulator to evaluate observables without constructing dense matrix operators.
+\cite[chapter II.A, II.B]{kohda2022quantum}
+
+% --- Implementation ---
+
+Following this decomposition, the simulator evaluates the expectation value by accumulating the independent contributions of each Hamiltonian term:
+
+\begin{minted}{cpp}
+for (const auto& term : operator_sum) {
+    result += expectation_value_fermionic_term(phi, psi, term);
+}
+\end{minted}
+
+For each fermionic operator string $\hat{O}_k$, \texttt{expectation\_value\_fermionic\_term} iterates exclusively over the non-zero amplitudes of $\ket{\psi}$. Annihilation and creation operators are applied with the same phase tracking as in Section~\ref{subsec:fermionic-excitation-implementation}. The inner product is evaluated via a hash-table lookup to retrieve the conjugate amplitude $d_{x'_k}^*$:
+
+\begin{minted}{cpp}
+auto it = phi.find(new_basis_state);
+if (it != phi.end()) {
+    const std::complex<double> coeff_phi = std::conj(it->second);
+    term_overlap += coeff_phi * (term.weight * std::complex<double>(phase, 0.0) * coeff_psi);
+}
+\end{minted}

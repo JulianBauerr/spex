@@ -4,130 +4,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % ==========================================
-% Section: Fundamentals of Quantum Information
-% ==========================================
-\section{Fundamentals of Quantum Information}
-This section outlines the core principles of quantum information theory, establishing the essential theoretical vocabulary necessary for navigating the complexities of quantum computation.
-
-We begin by defining the mathematical representation of quantum states. To describe composite systems consisting of multiple interacting components, we introduce the tensor product, which enables us also to represent the superpositions. Within this combined space, measure physical properties and defining interactions requires linear operators and observables. Finally, we detail the unitary operations and their underlying mathematical generators. Together, these foundational concepts provide the prerequisite knowledge required to understand the quantum formalisms discussed in subsequent chapters.
-
-% ==========================================
-% Subsection: Quantum States
-% ==========================================
-\subsection{Quantum States}\label{subsec:quantum-states}
-In an $n$-dimensional Hilbert space with a chosen orthonormal basis, a quantum state, denoted by the ket $\ket{\psi}$, can be represented as a $n$-dimensional complex column vector $\vec{\psi}$:
-\begin{equation}
-    \ket{\psi} \doteq \vec{\psi} =
-    \begin{pmatrix}
-        c_1 \\ c_2 \\ \vdots \\ c_n
-    \end{pmatrix}.
-\end{equation}
-
-Its corresponding dual state, denoted by the bra $\bra{\psi}$, is represented by the conjugate transpose of this column vector, resulting in an $n$-dimensional row vector $\vec{\psi}^\dagger$:
-\begin{equation}
-    \langle\psi| \doteq \vec{\psi}^\dagger =
-    \begin{pmatrix}
-        c_1^* & c_2^* & \dots & c_n^*
-    \end{pmatrix}.
-\end{equation}
-
-
-To ensure consistency with the probability interpretation, quantum states must be normalized to unity. Therefore, for a quantum state $\ket{\psi}$, the sum of the absolute squares of its probability amplitudes must equal to one:
-\begin{equation}
-    \abs{c_1}^2 +\abs{c_2}^2 + \dots + \abs{c_n}^2 = 1.
-\end{equation}
-\cite[chapter 1.1, 2.1]{Kottmann2025}
-\cite[chapter 1.2.1]{sakurai2020modern}
-
-
-% ==========================================
-% Subsection: Tensor Product
-% ==========================================
-\subsection{Tensor Products}\label{subsec:tensor-products}
-% multi-particle system's are constructed in Hilbert space using tensor products (maybe)
-In quantum mechanics, multi-particle systems are constructed within a composite Hilbert space using tensor products. The tensor product combines two or more distinct vector spaces into a single, larger space. Mathematically, if we consider a vector space of dimension $d_1$ and a second vector space of dimension $d_2$, the resulting composite space has a dimension of $d_1 \cdot d_2$ (i.e., $\mathbb{C}^{d_1} \otimes \mathbb{C}^{d_2} \rightarrow \mathbb{C}^{d_1 \cdot d_2}$).
-
-Constructing a multi-qubit basis state is achieved by taking the tensor product of the individual single-qubit states. For instance, if one qubit is in the state $\ket{0}$ and a second is in the state $\ket{1}$, the joint state of the two-qubit system is $\ket{0} \otimes \ket{1}$, which is conventionally abbreviated as $\ket{01}$. Because quantum systems can exist in superposition, a general composite state is expressed as a linear combination of all possible tensor product basis states. For a two-qubit system, this yields a four-dimensional complex vector:
-\begin{equation}
-    \ket{\psi} = c_{00}\ket{00} + c_{01}\ket{01} + c_{10}\ket{10} + c_{11}\ket{11}.
-\end{equation}
-
-The tensor product formalism also provides a definition of entanglement. A multi-particle state is defined as entangled if it cannot be factored into a simple tensor product of individual, single-particle states (i.e., $\ket{\psi} \neq \ket{\phi} \otimes \ket{\varphi}$).
-
-
-When quantum operators act on these composite Hilbert spaces, their tensor products obey several fundamental algebraic properties:
-\begin{itemize}
-    \item \textbf{Non-commutativity:} The order of the tensor product strictly matters; in general, $X \otimes Y \neq Y \otimes X$.
-    \item \textbf{Bilinearity:} The operation distributes over addition, such that $X \otimes (Y + Z) = X \otimes Y + X \otimes Z$.
-    \item \textbf{Mixed-Product Property:} Operators act independently on their respective subsystems, following the rule $(A \otimes B)(C \otimes D) = AC \otimes BD$.
-    \item \textbf{Eigensystems:} If an operator is formed by the tensor product of two matrices, its eigenvectors are the tensor products of the individual eigenvectors ($\ket{a_k} \otimes \ket{b_l}$), and the corresponding eigenvalues are the products of the individual eigenvalues ($a_k \cdot b_l$).
-\end{itemize}
-
-\cite[chapter 2.3, A.8]{Kottmann2025}
-
-
-
-% ==========================================
-% Subsection: Operators and Observables
-% ==========================================
-\subsection{Operators and Observables}
-A linear operator acts on a ket from the left to produce another ket vector, or on a bra from the right to produce another bra vector:
-\begin{align}
-    X\ket{\alpha} &= \ket{\beta}, \\
-    \bra{\alpha}X &= \bra{\beta}.
-\end{align}
-
-An operator $X$ is defined as the \textbf{null operator} if, for any arbitrary ket $\ket{\alpha}$, it satisfies:
-\begin{equation}
-    X \ket{\alpha} = 0.
-\end{equation}
-
-Operators can be added ($X + Y = Y + X$) and multiplied. While operator multiplication is generally noncommutative ($XY \neq YX$), it is strictly associative:
-\begin{equation}
-    X(YZ) = (XY)Z = XYZ.
-\end{equation}
-
-
-Because quantum states are represented as vectors in $\mathbb{C}^n$, a linear operator can be represented by a complex $n \times n$ matrix $U$. Given an input ket $\ket{\psi}$, the resulting state $\ket{\phi}$ is calculated via matrix-vector multiplication:
-\begin{equation}
-    \ket{\phi} = U\ket{\psi}.
-\end{equation}
-
-Crucially, physical operations that evolve a quantum state must preserve its probability normalization. Consequently, physical evolution operators are restricted to unitary matrices, ensuring that the inner product—and thus the normalization—remains invariant.
-
-An \textbf{observable} represents a physical quantity of a system that can be experimentally measured. Classical examples include position, momentum, angular momentum, and energy. In an $N$-qubit system, an observable is defined mathematically as a $2^N \times 2^N$ Hermitian matrix $H$. Because the operator is Hermitian, it guarantees that all possible measurement outcomes are strictly real numbers and correspond directly to the eigenvalues of $H$. Crucially, the act of measurement fundamentally alters the system: upon obtaining a specific eigenvalue, the quantum state instantaneously collapses into the corresponding eigenstate of that observable.
-
-Due to the inherent probabilistic nature of quantum mechanics, we generally cannot predict the outcome of a single measurement with absolute certainty. Instead, we evaluate the \textbf{expectation value}, which represents the statistical average of measured values over a large ensemble of identically prepared systems.
-
-In the context of this thesis, the primary observables of interest are Hamiltonians, which represent the total energy of the physical system. Let $H$ be the Hamiltonian. We conventionally assume that its resulting energy eigenvalues are ordered from the ground state upwards ($E_0 \le E_1 \le E_2 \le \dots$), satisfying the eigenvalue equation:
-\begin{equation}
-    H \ket{E_i} = E_i \ket{E_i}.
-\end{equation}
-
-Given a hamiltonian Operator $H$ and a quantum state $\ket{\psi}$ the expectation value can be calculated as:
-\begin{equation}
-    \langle H\rangle _{\psi} \coloneqq \bra{\psi} H \ket    {\psi}.
-\end{equation}
-\cite[chapter 2.2, 5.3]{Kottmann2025}
-\cite[chapter 1.2, 1.4.1]{sakurai2020modern}
-\cite[chapter 1.1.1]{schleich2025quantum}
-
-% ==========================================
-% Subsection: Unitary Operations and Generators
-% ==========================================
-\subsection{Unitary Operations and Generators}
-The physical transformations applied to quantum states are represented by unitary operators. To construct parameterized quantum gates, these unitary operations are typically expressed via the exponential map:
-\begin{equation}
-    \label{unitary_operation}
-    U(\theta) = e^{-i\frac{\theta}{2}G},
-\end{equation}
-where $\theta$ is a real-valued scalar parameter (such as a time or rotation angle), and $G$ is a Hermitian matrix ($G = G^\dagger$) known as the generator of the operation.
-\cite[chapter 1.2.12]{benito_kottmann_qc_2025}
-\cite[chapter II.]{kottmann2020feasible}
-
-
-
-% ==========================================
 % Section: Fermionic Many-Body Systems
 % ==========================================
 \section{Fermionic Many-Body Systems}
@@ -218,55 +94,41 @@ In quantum mechanics, a many-body system of identical particles is described usi
 The objective of a fermionic simulator is to evaluate the dynamics of many-body fermionic systems using qubit-based architectures. However, quantum hardware exclusively executes operations on distinguishable qubits. Consequently, a mathematically encoding scheme is required to translate fermionic behavior into a native qubit representation. This section first examines the fundamental algebraic mismatch between fermions and qubits, and subsequently introduces the specific mapping mechanisms to bridge this hardware gap.
 
 % ==========================================
-% Subsection: The Hardware Constraint: Fermions vs. Qubits
+% Subsection: The Hardware Constraint: Commutation vs. Anticommutation
 % ==========================================
-\subsection{The Hardware Constraint: Fermions vs. Qubits}
-
-While fermions are physical particles governed by indistinguishability, qubits are idealized, fully distinguishable two-state systems that serve as the fundamental units of quantum computation. In a quantum processor or qubit-based simulator, individual qubits are independently addressable. This distinguishability yields a crucial algebraic divergence: operators acting on disparate qubits naturally commute:
+\subsection{The Hardware Constraint: Commutation vs. Anticommutation}\label{subsec:hardware-constraint}
+Mapping fermionic systems to quantum hardware requires bridging a fundamental algebraic mismatch. In a quantum processor or qubit simulator, individual qubits are distinguishable and independently addressable; consequently, operators acting on distinct qubits ($i \neq j$) naturally commute:
 \begin{equation}
-    [A, B] = AB - BA = 0 \quad \Rightarrow \quad AB = BA
+    [\hat{Q}_i, \hat{Q}_j] = \hat{Q}_i\hat{Q}_j - \hat{Q}_j\hat{Q}_i = 0.
 \end{equation}
-In contrast, fermionic creation ($\hat{a}_i^\dagger$) and annihilation ($\hat{a}_i$) operators must anticommute:
+Conversely, the fermionic ladder operators must strictly anticommute to preserve wavefunction antisymmetry and enforce the Pauli exclusion principle:
 \begin{equation}
-    \{\hat{a}_i^\dagger, \hat{a}_j^\dagger\} = \hat{a}_i^\dagger \hat{a}_j^\dagger + \hat{a}_j^\dagger \hat{a}_i^\dagger = 0 \quad \Rightarrow \quad \hat{a}_i^\dagger \hat{a}_j^\dagger = -\hat{a}_j^\dagger \hat{a}_i^\dagger
+    \{\hat{a}_i^\dagger, \hat{a}_j^\dagger\} = \hat{a}_i^\dagger \hat{a}_j^\dagger + \hat{a}_j^\dagger \hat{a}_i^\dagger = 0 \quad \Rightarrow \quad \hat{a}_i^\dagger \hat{a}_j^\dagger = -\hat{a}_j^\dagger \hat{a}_i^\dagger.
 \end{equation}
-This characteristic is needed to preserve wavefunction antisymmetry and enforce the Pauli Exclusion Principle.
-
-\cite[chapter 3.11.1, 7.1, 7.7]{sakurai2020modern}
-\cite[chapter 1.]{Kottmann2025}
+This discrepancy prevents a simple one-to-one mapping between fermionic orbitals and individual qubits, necessitating non-local encoding schemes.
+\cite[chapter 3.11.1, 7.1, 7.7]{sakurai2020modern}\cite[chapter 1.]{Kottmann2025}
 
 
 % ==========================================
 % Subsection: The Jordan-Wigner Transformation
 % ==========================================
 \subsection{The Jordan-Wigner Transformation}\label{subsec:the-jordan-wigner-transformation}
-To simulate fermionic systems on quantum hardware, an encoding scheme is required to map the physical particles to the computational framework. The Jordan-Wigner (JW) transformation serves as the foundational mechanism for this mapping, establishing a direct bijection between $N$ fermionic spin-orbitals and $N$ individual qubits. Within this framework, the computational basis states directly represent the Fock space occupation number vectors: a qubit in state $\ket{1}$ denotes an occupied spin-orbital, while $\ket{0}$ denotes an empty one.
-
-However, preserving the indistinguishability of fermions presents a significant hardware constraint. Fermionic creation and annihilation operators are mathematically constrained to strictly anticommute to guarantee that the many-particle wavefunction remains totally antisymmetric under particle exchange. Because quantum hardware utilizes distinguishable qubits whose operators naturally commute, fermionic operators cannot be mapped to single qubits in a simple one-to-one fashion. Instead, they must be explicitly constructed from composite qubit operators.
-
-Under the standard Jordan-Wigner orbital-to-qubit mapping, the fermionic operators are defined as:
+The Jordan-Wigner (JW) transformation maps $N$ fermionic spin-orbitals to an $N$-qubit computational basis, establishing a bijection where states $\ket{1}$ and $\ket{0}$ represent occupied and empty orbitals, respectively. Because qubit operators commute locally, fermionic ladder operators cannot map one-to-one to individual qubits. To enforce canonical anticommutation rules and preserve wavefunction antisymmetry, JW constructs composite operators using non-local Pauli strings:
 \begin{align}
     \label{eq:creation_op_jd_transformation}
     \hat{a}_k^\dagger &= \mathbb{I}^{\otimes (k-1)} \otimes \hat{\sigma}_k^+ \otimes \hat{\sigma}_z^{\otimes (N-k)}, \\
     \label{eq:annhilation_op_jd_transformation}
     \hat{a}_k &= \mathbb{I}^{\otimes (k-1)} \otimes \hat{\sigma}_k^- \otimes \hat{\sigma}_z^{\otimes (N-k)}.
 \end{align}
-This composite definition relies on two functional components to artificially replicate fermionic behavior within an inherently commuting qubit environment:
-
-\textbf{Ladder Operators ($\hat{\sigma}_k^\pm$):} Defined using the standard Pauli matrices as:
+The local ladder operators, defined as
 \begin{equation}
-    \hat{\sigma}_k^\pm = \frac{1}{2}(\hat{\sigma}_x \pm i\hat{\sigma}_y).\label{eq:ladder_operators}
+    \hat{\sigma}_k^\pm = \frac{1}{2}(\hat{\sigma}_x \pm i\hat{\sigma}_y),\label{eq:ladder_operators}
 \end{equation}
-These operators execute the local ``creation'' or ``annihilation'' at the specific target qubit $k$ by raising or lowering the computational basis state between $\ket{0}$ (empty) and $\ket{1}$ (occupied).
+alter particle occupation at target site $k$. The non-local parity string $\hat{\sigma}_z^{\otimes (N-k)}$ acts on all subsequent qubits, multiplying the state by $-1$ for every occupied orbital encountered to globally replicate the Pauli exclusion principle \cite[Ch.~2.1]{schleich2025quantum}\cite[Ch.~III.B]{anand2022quantum}\cite[Ch.~II.E]{kottmann2020feasible}\cite[Ch.~1.1, 5.3]{Kottmann2025}.
 
-\textbf{Parity Strings ($\hat{\sigma}_z^{\otimes (N-k)}$):} A non-local tensor product of Pauli-$Z$ operators acting on the adjacent qubits. This string encodes the necessary parity information into the phase of the wavefunction.
+While JW provides the standard theoretical foundation for hardware mappings, evaluating non-local parity strings incurs significant computational overhead. Consequently, this project bypasses explicit JW transformations in favor of direct generator-based state evolution in Fock space.
 
-When evaluated against a quantum state, these non-local parity strings ($\hat{\sigma}_z$) systematically scan all qubits succeeding (or preceding, depending on the chosen convention) the target site $k$. Because the Pauli-$Z$ operator acts as the identity on $\ket{0}$ and applies a phase of $-1$ to $\ket{1}$, this string iteratively multiplies a global phase factor of $-1$ for every occupied state it encounters. This mechanism systematically and globally replicates the exact antisymmetric phase inversions demanded by the Pauli Exclusion Principle.
-
-\cite[chapter 2.1]{schleich2025quantum}
-\cite[chapter III.B]{anand2022quantum}
-\cite[chapter II.E]{kottmann2020feasible}
-\cite[chapter 1.1, 5.3]{Kottmann2025}
+\cite[chapter 2.1]{schleich2025quantum}\cite[chapter III.B]{anand2022quantum}\cite[chapter II.E]{kottmann2020feasible}\cite[chapter 1.1, 5.3]{Kottmann2025}
 
 
 % ==========================================
@@ -284,52 +146,29 @@ We saw before that fermions differ from qubits, also in the definition of the ex
 \subsection{Qubit Excitations}
 To dynamically evolve a quantum state on hardware, the most direct approach is to apply excitations directly within the computational qubit space. These operations, commonly referred to as qubit excitations or orbital rotations, move particle occupations between sites. Instead of utilizing true fermionic creation ($\hat{a}^\dagger$) and annihilation ($\hat{a}$) operators, qubit excitations are constructed natively from the Ladder Operators.
 
-Mathematically, a single-qubit excitation describing a transition between an occupied qubit $i$ and a target qubit $b$ is defined by the unitary operator:
+Mathematically, a single-qubit excitation describing a transition between an occupied qubit $i$ and a target qubit $b$ is defined by the unitary rotation:
 \begin{equation}
-    U_{i}^{b}(\theta) = e^{\theta \left(\hat{\sigma}^+_{b}\hat{\sigma}^-_{i} - \hat{\sigma}^+_{i}\hat{\sigma}^-_{b}\right)}.\label{eq:qubit_exc_unitary_def}
+    U_{i}^{b}(\theta) = e^{\theta \left(\hat{\sigma}^+_{b}\hat{\sigma}^-_{i} - \hat{\sigma}^+_{i}\hat{\sigma}^-_{b}\right)} = e^{-i\theta \left(\hat{\sigma}^b_{x}\hat{\sigma}^i_{y} - \hat{\sigma}^b_{y}\hat{\sigma}^i_{x}\right)}.\label{eq:qubit_exc_unitary_def}
 \end{equation}
-This can be equivalently expressed in terms of standard Pauli matrices (absorbing the scalar factors into the rotation parameter $\theta$) as (see appendix for an algebraic derivation):
-\begin{equation}
-    U_{i}^{b}(\theta) = e^{-i\theta \left(\hat{\sigma}^b_{x}\hat{\sigma}^i_{y} - \hat{\sigma}^b_{y}\hat{\sigma}^i_{x}\right)}.\label{eq:quibt_exc_unitary_derivation}
-\end{equation}
-Note that $\hat{\sigma}_{x}$ and $\hat{\sigma}_{y}$ refers to the Pauli-X and Pauli-Y operators. This unitary operator acts locally on the target qubits, functioning as a rotation matrix exclusively within the $\{\ket{01}, \ket{10}\}$ subspace to swap the occupation states.
-
-\cite[chapter IV.A.1.b.]{anand2022quantum}
-
-This concept naturally extends to higher-order excitations. Given a set of target orbitals denoted by the vector $\boldsymbol{k}$, and a set of occupied orbitals denoted by $\boldsymbol{l}$, the multi-qubit excitation generator is constructed directly from products of the corresponding raising and lowering operators:
+This operator acts locally within the $\{\ket{01}, \ket{10}\}$ subspace to swap occupation states~\cite[Ch.~IV.A.1.b]{anand2022quantum}. For $n$-fold excitations between occupied orbitals $\boldsymbol{l}$ and targets $\boldsymbol{k}$, the multi-qubit generator generalizes to:
 \begin{equation}
     \label{eq:mult_qu_exc_generator}
-    G^{\boldsymbol{k}}_{\boldsymbol{l}} = i\left(\prod_n \hat{\sigma}^-_{k_n} \prod_m \hat{\sigma}^+_{l_m} - \text{h.c.} \right).
+    G^{\boldsymbol{k}}_{\boldsymbol{l}} = i\left(\prod_{n} \hat{\sigma}^-_{k_n} \prod_{m} \hat{\sigma}^+_{l_m} - \text{h.c.} \right).
 \end{equation}
-% Todo reference
+% Todo Citation
 
 % ==========================================
 % Subsection: Fermionic Excitations
 % ==========================================
 \subsection{Fermionic Excitations}
-While qubit excitations are highly hardware-efficient and successfully redistribute particle occupations, they lack a crucial physical property: they do not natively track the non-local antisymmetric phase shifts required when identical fermions exchange positions. To fully capture the physical reality of a many-body system and enforce the Pauli Exclusion Principle globally, we must utilize true fermionic excitations.
+While hardware-efficient, qubit excitations act locally and fail to enforce the non-local antisymmetric phase shifts required by the Pauli exclusion principle when identical fermions exchange positions. True fermionic excitations resolve this by constructing generators strictly from anticommuting creation ($\hat{a}^\dagger$) and annihilation ($\hat{a}$) operators.
 
-Fermionic excitations are represented by a generator $G$, constructed strictly from the anticommuting creation ($\hat{a}^\dagger$) and annihilation ($\hat{a}$) operators introduced during second quantization. For instance, the generator $G_{pq}$ describes a single fermionic excitation, denoting the transition of an electron from the $p$-th spin-orbital to the $q$-th spin-orbital:
-\begin{equation}
-    G_{pq} = i(\hat{a}^\dagger_p \hat{a}_q - \hat{a}^\dagger_q \hat{a}_p).
-\end{equation}
-
-Higher-order excitations are constructed in a similar mathematical manner. The generator $G_{pqrs}$ models a double excitation, accounting for the simultaneous transition of one electron between the $p$-th and $q$-th orbitals, and a second electron between the $r$-th and $s$-th orbitals:
-\begin{equation}
-    G_{pqrs} = i(\hat{a}^\dagger_p \hat{a}_q \hat{a}^\dagger_r \hat{a}_s - \text{h.c.}).
-\end{equation}
-Here, $\text{h.c.}$ denotes the Hermitian conjugate of the preceding term. This standard notation simplifies the equation while ensuring the operator correctly captures the reverse electron exchange process to maintain Hermiticity, analogous to the subtracted term in the single excitation.
-
-Generalizing this concept, an $n$-fold fermionic excitation can be compactly represented by a generator $G_{\mathbf{pq}}$, which encapsulates all possible simultaneous electron exchanges between a set of occupied orbitals $\{p_k\}$ and a set of target orbitals $\{q_k\}$. Because this represents $n$ simultaneous events, it is defined as a product of $n$ operator pairs:
+An $n$-fold fermionic excitation generator $G_{\mathbf{pq}}$, representing simultaneous electron transitions from occupied spin-orbitals $\mathbf{p} = \{p_1, \dots, p_n\}$ to targets $\mathbf{q} = \{q_1, \dots, q_n\}$, is defined as:
 \begin{equation}
     \label{eq:mult_fe_exc_generator}
-    G_{\mathbf{pq}} = i \left( \prod_{k=1}^{n} \hat{a}^\dagger_{p_k} \hat{a}_{q_k} - \text{h.c.} \right).
+    G_{\mathbf{pq}} = i \left( \prod_{k=1}^{n} \hat{a}^\dagger_{p_k} \hat{a}_{q_k} - \text{h.c.} \right),
 \end{equation}
-To apply these generators within a quantum simulator or on physical quantum hardware, they are mapped via the Jordan-Wigner transformation and exponentiated into a unitary operation (e.g., $U = \exp(-i\theta G_{\mathbf{pq}})$).
-
-\cite[chapter II.]{kottmann2020feasible}\cite[chapter III.A]{anand2022quantum}
-
-
+where $\text{h.c.}$ denotes the Hermitian conjugate. Single ($G_{pq}$) and double ($G_{pqrs}$) excitations follow directly as special cases for $n=1$ and $n=2$, respectively. It is possible to map the operator ($U = e^{-i\theta G_{\mathbf{pq}}}$) to qubit space via transformations such as Jordan-Wigner \cite[Ch.~II]{kottmann2020feasible}\cite[Ch.~III.A]{anand2022quantum}.
 
 
 
