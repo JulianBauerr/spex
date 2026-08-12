@@ -588,6 +588,24 @@ State apply_fermion_excitation(const State& state, const FermionTerm& term, doub
     return new_state;
 }
 
+/**
+ * Applies the Generator to the input state under the constraint that all orbitals are orthogonal to each other.
+ * Apply exp(-i*θ * Σ_k (w_k·A_k + w̄_k·A_k†)) to |ψ⟩ - orbitals must be orthogonal
+ * @param state input state
+ * @param terms Generator
+ * @param theta rotation
+ * @return output state
+ */
+State apply_abstract_generator(const State& state, const std::vector<FermionTerm>& terms, double theta) {
+    State current_state = state;
+
+    for (const auto& term : terms) {
+        current_state = apply_fermion_excitation(current_state, term, theta);
+    }
+
+    return current_state;
+}
+
 std::complex<double> expectation_value_fermionic_term(const State &phi, const State &psi,
                                                       const FermionTerm &term) {
     // Init
@@ -755,4 +773,9 @@ PYBIND11_MODULE(spex_tequila, p) {
     p.def("apply_fermion_excitation", &apply_fermion_excitation,
         "Apply exp(-i*θ/2 * (w·A + w̄·A†)) to |ψ⟩ where A = Π a†_c Π a_a",
         py::arg("state"), py::arg("term"), py::arg("theta"));
+
+    // Expose apply_abstract_generator function (sum of fermionic terms, exact)
+    p.def("apply_abstract_generator", &apply_abstract_generator,
+          "Apply exp(-i*θ * Σ_k (w_k·A_k + w̄_k·A_k†)) to |ψ⟩ - orbitals must be orthogonal",
+          py::arg("state"), py::arg("terms"), py::arg("theta"));
 }
