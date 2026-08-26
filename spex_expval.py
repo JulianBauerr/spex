@@ -242,7 +242,7 @@ class SpexExpval:
         self.hamiltonian = self._build_hamiltonian()
 
         if run_hf:
-            occupied = [2 * i for i in range(self.n_alpha)] + [2 * i + 1 for i in range(self.n_beta)]
+            occupied = [i for i in range(self.n_alpha)] + [self.norb + i for i in range(self.n_beta)]
             hf_state = {sum(1 << o for o in occupied): 1.0}
             self._init_state_bra = hf_state
             self._init_state_ket = hf_state
@@ -261,35 +261,33 @@ class SpexExpval:
             self.operator = self.build_operator(operator)
 
     def _build_hamiltonian(self) -> List[spex.FermionTerm]:
-        # Integrals in chemists notation g[p,q,r,s]=(pq|rs); orbital p -> spin orbitals 2p (alpha),
-        # 2p+1 (beta). spex convention: creation/annihilation lists are reversed vs mathematical
-        # order, so the two-body term is FermionTerm([2q+t, 2p+s], [2r+s, 2s+t], 0.5*g[p,q,r,s]).
+        # Integrals in chemists notation g[p,q,r,s]=(pq|rs); spatial orbital p maps to
+        # spin orbitals p (alpha) and p+norb (beta) in up-then-down ordering.
+        norb = self.norb
         terms: List[spex.FermionTerm] = []
         if self.core_energy is not None and abs(self.core_energy) > _ZERO_TOL:
             terms.append(spex.FermionTerm([], [], complex(self.core_energy)))
         if self.one_body_integrals is not None:
             h = array(self.one_body_integrals, dtype=complex128)
-            for p in range(self.norb):
-                for q in range(self.norb):
+            for p in range(norb):
+                for q in range(norb):
                     if abs(h[p, q]) < _ZERO_TOL:
                         continue
-                    terms.append(spex.FermionTerm([2 * p], [2 * q], h[p, q]))
-                    terms.append(spex.FermionTerm([2 * p + 1], [2 * q + 1], h[p, q]))
+                    terms.append(spex.FermionTerm([p], [q], h[p, q]))
+                    terms.append(spex.FermionTerm([p + norb], [q + norb], h[p, q]))
         if self.two_body_integrals is not None:
             g = array(self.two_body_integrals, dtype=complex128)
-            for p in range(self.norb):
-                for q in range(self.norb):
-                    for r in range(self.norb):
-                        for s in range(self.norb):
+            for p in range(norb):
+                for q in range(norb):
+                    for r in range(norb):
+                        for s in range(norb):
                             w = 0.5 * g[p, q, r, s]
                             if abs(w) < _ZERO_TOL:
                                 continue
-                            # same spin (alpha-alpha / beta-beta)
-                            terms.append(spex.FermionTerm([2 * q, 2 * p], [2 * r, 2 * s], w))
-                            terms.append(spex.FermionTerm([2 * q + 1, 2 * p + 1], [2 * r + 1, 2 * s + 1], w))
-                            # mixed spins (alpha-beta / beta-alpha)
-                            terms.append(spex.FermionTerm([2 * q + 1, 2 * p], [2 * r, 2 * s + 1], w))
-                            terms.append(spex.FermionTerm([2 * q, 2 * p + 1], [2 * r + 1, 2 * s], w))
+                            terms.append(spex.FermionTerm([q, p], [r, s], w))
+                            terms.append(spex.FermionTerm([q + norb, p + norb], [r + norb, s + norb], w))
+                            terms.append(spex.FermionTerm([q + norb, p], [r, s + norb], w))
+                            terms.append(spex.FermionTerm([q, p + norb], [r + norb, s], w))
         return terms
 
     @property
@@ -459,9 +457,9 @@ class SpexExpval:
             return result
         gates = circuit.gates
         for gate in gates:
-            indices = getattr(gate, 'indices', None)
+            indices = gate.indices
             parameter = gate.variables
-            if indices is None or len(indices) == 0:
+            if not indices:
                 continue
             if isinstance(parameter, Variable):
                 name = getattr(parameter, 'name', None)
@@ -476,6 +474,9 @@ class SpexExpval:
                 theta = float(value)
             else:
                 theta = float(parameter)
-            term = spex.FermionTerm([i for i, _ in indices], [j for _, j in indices], 1.0j)
-            result = spex.apply_abstract_generator(result, [term], theta)
+            for term_pairs in indices:
+                creation = [p[0] for p in term_pairs]
+                annihilation = [p[1] for p in term_pairs]
+                term = spex.FermionTerm(creation, annihilation, 1.0j)
+                result = spex.apply_abstract_generator(result, [term], theta)
         return result
