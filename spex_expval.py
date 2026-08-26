@@ -1,21 +1,21 @@
 """Expectation value wrapper <bra|O|ket> around the spex_tequila C++ simulator; states are sparse dict[int, complex]."""
 import spex_tequila as spex
 
-try:
-    from ..fermionic_operations.circuit import FCircuit
-except ImportError:  # standalone usage outside the sunrise package
-    FCircuit = None
+from sunrise.fermionic_operations.circuit import FCircuit
 
 from tequila import TequilaException, QubitWaveFunction, Variable, QubitHamiltonian
 from tequila.objective.objective import Variables
 from tequila.quantumchemistry.chemistry_tools import NBodyTensor
 from tequila.quantumchemistry import qc_base
 from tequila.utils.bitstrings import BitNumbering, reverse_int_bits
-from numpy import eye, ndarray, array, complex128, real, einsum
+from numpy import eye, ndarray, array, complex128, real, einsum, argwhere
 from pyscf.gto import Mole
 from pyscf.scf import RHF
 from openfermion import FermionOperator
 from typing import Union, List, Callable
+
+
+_ZERO_TOL = 1e-12
 
 
 def _restore_eri(mf) -> ndarray:
@@ -47,8 +47,11 @@ class SpexExpval:
         self.hamiltonian: List[spex.FermionTerm] = []
         self._init_state_bra: dict = None
         self._init_state_ket: dict = None
-        self._ket = self._bra = self._name = None
+        self._ket = None
+        self._bra = None
+        self._name = None
 
+        # Molecule Data
         self.norb: int = None
         self.n_alpha: int = None
         self.n_beta: int = None
@@ -79,7 +82,7 @@ class SpexExpval:
                 raise TequilaException('Two molecules provided?')
             kwargs['molecule'] = kwargs.pop('mol')
 
-        run_hf = (bra is None or getattr(bra, 'initial_state', None) is None) and (ket is None or getattr(ket, 'initial_state', None) is None)
+        run_hf = (bra is None or bra.initial_state is None) and (ket is None or ket.initial_state is None)
 
         if 'molecule' in kwargs and kwargs['molecule']:
             molecule = kwargs.pop('molecule')
@@ -147,8 +150,13 @@ class SpexExpval:
             elif 'symmetry' in kwargs:
                 self.symmetry = kwargs.pop('symmetry')
         else:
-            int1e = int2e = e_core = mo_coeff = None
-            n_elec = n_alpha = n_beta = None
+            int1e = None
+            int2e = None
+            e_core = None
+            mo_coeff = None
+            n_elec = None
+            n_alpha = None
+            n_beta = None
             spin = 0
             point_group = None
             if "int1e" in kwargs:
@@ -200,10 +208,10 @@ class SpexExpval:
                 n_beta = kwargs.pop('n_beta')
                 n_elec = n_alpha + n_beta
             elif ket is not None and ket.initial_state is not None:
-                wvf = ket.initial_state
-                n_elec = next((bin(int(bs))[2:].count('1') for bs, _ in wvf.items()), None)
-                if n_elec is None:
-                    raise TequilaException('No manner of defining the amount of electrons provided')
+                if isinstance(ket.initial_state._state, dict):
+                    n_elec = bin([*ket.initial_state._state.keys()][0])[2:].count('1')
+                else:
+                    n_elec = bin(argwhere(ket.initial_state._state > 1.e-6)[0][0])[2:].count('1')
                 n_alpha = int((n_elec + 2 * spin) // 2)
                 n_beta = int((n_elec - 2 * spin) // 2)
             else:
@@ -257,13 +265,13 @@ class SpexExpval:
         # 2p+1 (beta). spex convention: creation/annihilation lists are reversed vs mathematical
         # order, so the two-body term is FermionTerm([2q+t, 2p+s], [2r+s, 2s+t], 0.5*g[p,q,r,s]).
         terms: List[spex.FermionTerm] = []
-        if self.core_energy is not None and abs(self.core_energy) > 1e-12:
+        if self.core_energy is not None and abs(self.core_energy) > _ZERO_TOL:
             terms.append(spex.FermionTerm([], [], complex(self.core_energy)))
         if self.one_body_integrals is not None:
             h = array(self.one_body_integrals, dtype=complex128)
             for p in range(self.norb):
                 for q in range(self.norb):
-                    if abs(h[p, q]) < 1e-12:
+                    if abs(h[p, q]) < _ZERO_TOL:
                         continue
                     terms.append(spex.FermionTerm([2 * p], [2 * q], h[p, q]))
                     terms.append(spex.FermionTerm([2 * p + 1], [2 * q + 1], h[p, q]))
@@ -274,7 +282,7 @@ class SpexExpval:
                     for r in range(self.norb):
                         for s in range(self.norb):
                             w = 0.5 * g[p, q, r, s]
-                            if abs(w) < 1e-12:
+                            if abs(w) < _ZERO_TOL:
                                 continue
                             # same spin (alpha-alpha / beta-beta)
                             terms.append(spex.FermionTerm([2 * q, 2 * p], [2 * r, 2 * s], w))
@@ -290,18 +298,11 @@ class SpexExpval:
 
     @bra.setter
     def bra(self, bra):
-        # FCircuit guard: strict isinstance when FCircuit is available, duck-typed check otherwise.
-        if FCircuit is not None:
-            if not isinstance(bra, FCircuit):
-                raise TypeError(f"FCircuit expected, received {type(bra).__name__}")
-        elif not (hasattr(bra, 'gates') or (
-            hasattr(bra, '__iter__') and not isinstance(bra, (str, bytes, dict))
-        )):
+        if not isinstance(bra, FCircuit):
             raise TypeError(f"FCircuit expected, received {type(bra).__name__}")
-        if getattr(bra, 'initial_state', None) is not None:
+        if bra.initial_state is not None:
             self._init_state_bra = self.__qwvf_to_civect(bra.initial_state)
-        if hasattr(bra, 'to_upthendown'):
-            bra = bra.to_upthendown(self.norb)
+        bra = bra.to_upthendown(self.norb)
         self._bra = bra
 
     @property
@@ -310,18 +311,11 @@ class SpexExpval:
 
     @ket.setter
     def ket(self, ket):
-        # FCircuit guard: strict isinstance when FCircuit is available, duck-typed check otherwise.
-        if FCircuit is not None:
-            if not isinstance(ket, FCircuit):
-                raise TypeError(f"FCircuit expected, received {type(ket).__name__}")
-        elif not (hasattr(ket, 'gates') or (
-            hasattr(ket, '__iter__') and not isinstance(ket, (str, bytes, dict))
-        )):
+        if not isinstance(ket, FCircuit):
             raise TypeError(f"FCircuit expected, received {type(ket).__name__}")
-        if getattr(ket, 'initial_state', None) is not None:
+        if ket.initial_state is not None:
             self._init_state_ket = self.__qwvf_to_civect(ket.initial_state)
-        if hasattr(ket, 'to_upthendown'):
-            ket = ket.to_upthendown(self.norb)
+        ket = ket.to_upthendown(self.norb)
         self._ket = ket
 
     @property
@@ -349,10 +343,8 @@ class SpexExpval:
 
     def __civect_to_qwvf(self, state_dict: dict) -> QubitWaveFunction:
         wvf = QubitWaveFunction(n_qubits=2 * self.norb, numbering=BitNumbering.LSB)
-        # QubitWaveFunction has no public sparse constructor; _state is a dict keyed by
-        # basis-state ints in the wavefunction's own numbering.
         wvf._state = {
-            int(k): complex(v) for k, v in (state_dict or {}).items() if abs(v) > 1e-12
+            int(k): complex(v) for k, v in (state_dict or {}).items() if abs(v) > _ZERO_TOL
         }
         return wvf
 
@@ -363,7 +355,7 @@ class SpexExpval:
             key = int(bs)
             if wvf.numbering != BitNumbering.LSB:
                 key = reverse_int_bits(key, 2 * self.norb)
-            if abs(coeff) > 1e-8:
+            if abs(coeff) > _ZERO_TOL:
                 result[key] = complex(coeff)
         return result
 
@@ -384,7 +376,7 @@ class SpexExpval:
             # openfermion's terms dict already merges identical terms
             terms: List[spex.FermionTerm] = []
             for term, weight in operator.terms.items():
-                if abs(weight) < 1e-12:
+                if abs(weight) < _ZERO_TOL:
                     continue
                 if len(term) == 0:
                     terms.append(spex.FermionTerm([], [], weight))
@@ -434,7 +426,6 @@ class SpexExpval:
 
         ket_state = self._apply_circuit(self._init_state_ket, self.ket, dvars)
         if self.is_diagonal:
-            # diagonal case: same (ket) state on both sides, mirroring vdot(ket, O @ ket)
             bra_state = ket_state
         else:
             bra_state = self._apply_circuit(self._init_state_bra, self.bra, dvars)
@@ -463,15 +454,13 @@ class SpexExpval:
     def _apply_circuit(self, state: dict, circuit, dvars: dict) -> dict:
         # each gate maps to FermionTerm(creation_idx=[from...], annihilation_idx=[to...], 1j)
         state = {} if state is None else state
-        result = {int(k): complex(v) for k, v in state.items() if abs(v) > 1e-12}
+        result = {int(k): complex(v) for k, v in state.items() if abs(v) > _ZERO_TOL}
         if circuit is None:
             return result
-        gates = getattr(circuit, 'gates', None)
-        if gates is None:
-            gates = circuit
+        gates = circuit.gates
         for gate in gates:
             indices = getattr(gate, 'indices', None)
-            parameter = getattr(gate, 'parameter', 0.0)
+            parameter = gate.variables
             if indices is None or len(indices) == 0:
                 continue
             if isinstance(parameter, Variable):
