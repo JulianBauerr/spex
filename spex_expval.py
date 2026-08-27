@@ -281,7 +281,7 @@ class SpexExpval:
                 for q in range(norb):
                     for r in range(norb):
                         for s in range(norb):
-                            w = 0.5 * g[p, q, r, s]
+                            w = 0.5 * g[p, r, q, s]
                             if abs(w) < _ZERO_TOL:
                                 continue
                             terms.append(spex.FermionTerm([q, p], [r, s], w))
@@ -477,6 +477,6 @@ class SpexExpval:
             for term_pairs in indices:
                 creation = [p[0] for p in term_pairs]
                 annihilation = [p[1] for p in term_pairs]
-                term = spex.FermionTerm(creation, annihilation, 1.0j)
+                term = spex.FermionTerm(creation, annihilation, -1.0j)
                 result = spex.apply_abstract_generator(result, [term], theta)
         return result
