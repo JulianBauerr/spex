@@ -9,6 +9,7 @@ from tequila.quantumchemistry import qc_base
 from tequila.utils.bitstrings import BitNumbering, reverse_int_bits
 from numpy import eye, ndarray, array, complex128, real, argwhere
 from openfermion import FermionOperator
+from numbers import Number
 from typing import Union, List, Callable
 
 
@@ -216,10 +217,11 @@ class SpexExpval:
             self._name = kwargs.pop('name')
         else:
             self._name = 'Expectation Value' if self.is_diagonal else 'Transition Value'
+        if operator is None:
+            operator = 'H'
         if isinstance(operator, str) and operator == 'I':
             self._name = 'Transition Element'
-        if operator is not None:
-            self.operator = self.build_operator(operator)
+        self.operator = self.build_operator(operator)
 
     def _build_hamiltonian(self) -> List[spex.FermionTerm]:
         # Integrals in chemists notation g[p,q,r,s]=(pq|rs); spatial orbital p maps to
@@ -331,6 +333,8 @@ class SpexExpval:
 
         if isinstance(operator, str):
             operator = from_string(operator)
+        elif isinstance(operator, Number):
+            operator = [spex.FermionTerm([], [], complex(operator))]
         elif isinstance(operator, FermionOperator):
             # openfermion's terms dict already merges identical terms
             terms: List[spex.FermionTerm] = []
