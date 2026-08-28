@@ -1,4 +1,3 @@
-"""Expectation value wrapper <bra|O|ket> around the spex_tequila C++ simulator; states are sparse dict[int, complex]."""
 import spex_tequila as spex
 
 from sunrise.fermionic_operations.circuit import FCircuit
@@ -8,29 +7,12 @@ from tequila.objective.objective import Variables
 from tequila.quantumchemistry.chemistry_tools import NBodyTensor
 from tequila.quantumchemistry import qc_base
 from tequila.utils.bitstrings import BitNumbering, reverse_int_bits
-from numpy import eye, ndarray, array, complex128, real, einsum, argwhere
-from pyscf.gto import Mole
-from pyscf.scf import RHF
+from numpy import eye, ndarray, array, complex128, real, argwhere
 from openfermion import FermionOperator
 from typing import Union, List, Callable
 
 
 _ZERO_TOL = 1e-12
-
-
-def _restore_eri(mf) -> ndarray:
-    # pyscf stores ERIs packed in 2D; ao2mo.restore recovers the 4-index (pq|rs) AO tensor.
-    from pyscf import ao2mo
-
-    eri2d = mf._eri
-    if eri2d is None:
-        eri2d = mf.with_df.get_eri() if getattr(mf, 'with_df', None) is not None else None
-        if eri2d is None:
-            raise TequilaException('No two-electron integrals available on the SCF object')
-    if eri2d.ndim != 4:
-        nao = mf.mol.nao_nr()
-        return array(ao2mo.restore(1, eri2d, nao), dtype=complex128)
-    return array(eri2d, dtype=complex128)
 
 
 class SpexExpval:
@@ -101,27 +83,6 @@ class SpexExpval:
                 self.atom = molecule.parameters.get_geometry()
                 self.basis = molecule.parameters.basis_set
                 self.active_space = [i.idx_total for i in molecule.integral_manager.active_orbitals]
-            elif isinstance(molecule, Mole):
-                mf = RHF(mol=molecule)
-                mf.kernel()
-                self.mo_coeff = array(mf.mo_coeff, dtype=complex128)
-                self.core_energy = float(mf.energy_nuc())
-                self.one_body_integrals = einsum('pi,pq,qj->ij', self.mo_coeff, array(mf.get_hcore(), dtype=complex128), self.mo_coeff)
-                eri_ao = _restore_eri(mf)
-                self.two_body_integrals = einsum(
-                    'pqrs,pi,qj,rk,sl->ijkl', eri_ao, *[self.mo_coeff] * 4
-                )
-                self.norb = self.mo_coeff.shape[1]
-                nelec = molecule.nelec
-                if isinstance(nelec, (tuple, list)):
-                    self.n_alpha, self.n_beta = int(nelec[0]), int(nelec[1])
-                else:
-                    self.n_alpha = int(nelec // 2)
-                    self.n_beta = int(nelec - self.n_alpha)
-                self.spin = molecule.spin / 2
-                self.symmetry = getattr(molecule, 'symmetry', None)
-                self.atom = getattr(molecule, 'atom', None)
-                self.basis = getattr(molecule, 'basis', None)
             else:
                 raise TequilaException(f"No molecule type {type(molecule).__name__} supported")
         elif 'integral_manager' in kwargs and 'parameters' in kwargs:
@@ -428,12 +389,12 @@ class SpexExpval:
         else:
             bra_state = self._apply_circuit(self._init_state_bra, self.bra, dvars)
 
+        if callable(self.operator):
+            ket_state = self.operator(ket_state)
         if isinstance(self.operator, list):
             result = spex.expectation_value_fermionic(bra_state, ket_state, self.operator)
-        elif callable(self.operator):
-            result = spex.inner_product(bra_state, self.operator(ket_state))
         else:
-            result = spex.inner_product(bra_state, ket_state)  # no operator: plain <bra|ket>
+            result = spex.expectation_value_fermionic(bra_state, ket_state, [spex.FermionTerm([], [], 1.0)])
         return float(real(result))
 
     def extract_variables(self) -> List[Variable]:
@@ -477,6 +438,8 @@ class SpexExpval:
             for term_pairs in indices:
                 creation = [p[0] for p in term_pairs]
                 annihilation = [p[1] for p in term_pairs]
-                term = spex.FermionTerm(creation, annihilation, -1.0j)
-                result = spex.apply_abstract_generator(result, [term], theta)
+                n_pairs = len(term_pairs)
+                weight = 1.0j * ((-1) ** (n_pairs * (n_pairs - 1) // 2))
+                term = spex.FermionTerm(creation, annihilation, weight)
+                result = spex.apply_fermion_excitation(result, term, theta)
         return result
