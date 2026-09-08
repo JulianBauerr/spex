@@ -173,7 +173,7 @@ State apply_fswap(const State& state, int i, int j) {
  *
  * When |w|=0 the state is returned unchanged.
  */
-State apply_fermion_excitation(const State& state, const FermionTerm& term, double theta) {
+State apply_fermionic_excitation(const State& state, const FermionTerm& term, double theta) {
     if (state.empty())
         throw std::invalid_argument("A state cannot be empty");
 
@@ -267,7 +267,7 @@ State apply_abstract_generator(const State& state, const std::vector<FermionTerm
     State current_state = state;
 
     for (const auto& term : terms) {
-        current_state = apply_fermion_excitation(current_state, term, theta);
+        current_state = apply_fermionic_excitation(current_state, term, theta);
     }
 
     return current_state;
@@ -381,7 +381,7 @@ PYBIND11_MODULE(spex_tequila, p) {
         py::arg("state"), py::arg("i"), py::arg("j"));
 
     // Expose apply_fermion_excitation function (generalized)
-    p.def("apply_fermion_excitation", &apply_fermion_excitation,
+    p.def("apply_fermion_excitation", &apply_fermionic_excitation,
         "Apply exp(-i*θ/2 * (w·A + w̄·A†)) to |ψ⟩ where A = Π a†_c Π a_a",
         py::arg("state"), py::arg("term"), py::arg("theta"));
 

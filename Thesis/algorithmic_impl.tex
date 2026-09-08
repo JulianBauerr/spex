@@ -58,9 +58,9 @@ To translate this theoretical framework into a high-performance algorithmic rout
 
 
 % ==========================================
-% Subsection: Qubit Baseline
+% Subsection: Fermionic Excitation
 % ==========================================
-\subsection{Qubit Baseline}\label{subsec:qubit-baseline}
+\subsection{Fermionic Excitation}\label{subsec:fermionic-excitation}
 Rather than relying on full matrix exponentiation, the direct state evolution approach exploits the algebraic properties of the generator to update the state.
 We can simplify the evaluation of the unitary operation, in order to compute the excitation efficiently.
 
@@ -208,7 +208,7 @@ Algorithmically, resolving $\ket{x'_k}$ via bitwise manipulations allows the sim
 
 Following this decomposition, the simulator evaluates the expectation value by breaking the Hamiltonian down and accumulating each Hamiltonian term by itself.
 For each fermionic operator string $\hat{O}_k$, the algorithm iterates only over the non-zero amplitudes of $\ket{\psi}$.
-Annihilation and creation operators are applied in the same way as in Section~\ref{subsec:qubit-baseline} already discussed.
+Annihilation and creation operators are applied in the same way as in Section~\ref{subsec:fermionic-excitation} already discussed.
 
 The following algorithm describes the C++ function in its fundamental operation:
 \begin{minted}[frame=lines, framesep=2mm, obeytabs=true, tabsize=4]{text}
@@ -237,5 +237,5 @@ For each term in operator_sum:
 Return total_expectation_value
 \end{minted}
 
-Apart from the efficiency mechanisms already discussed in~\ref{subsec:qubit-baseline} this function implements a constant-time hashmap lookup to find the new basis state.
+Apart from the efficiency mechanisms already discussed in~\ref{subsec:fermionic-excitation} this function implements a constant-time hashmap lookup to find the new basis state.
 The implemented C++ function can be found in the appendix under~\ref{subsec:apendix-expectation-value}.

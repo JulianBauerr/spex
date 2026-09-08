@@ -6,7 +6,7 @@ from sunrise.expval import INSTALLED_FERMIONIC_BACKENDS,Braket
 from numpy import isclose
 import random
 from datetime import datetime
-
+INSTALLED_FERMIONIC_BACKENDS = ["spex"]
 HAS_TCC = "tcc" in INSTALLED_FERMIONIC_BACKENDS
 HAS_FQE = "fqe" in INSTALLED_FERMIONIC_BACKENDS
 

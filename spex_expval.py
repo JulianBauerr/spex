@@ -114,6 +114,7 @@ class SpexExpval:
         else:
             int1e = None
             int2e = None
+            int2e = None
             e_core = None
             mo_coeff = None
             n_elec = None
