@@ -304,22 +304,10 @@ class SpexExpval:
         return self.ket if self.is_diagonal else [self.bra, self.ket]
 
     def __civect_to_qwvf(self, state_dict: dict) -> QubitWaveFunction:
-        wvf = QubitWaveFunction(n_qubits=2 * self.norb, numbering=BitNumbering.LSB)
-        wvf._state = {
-            int(k): complex(v) for k, v in (state_dict or {}).items() if abs(v) > _ZERO_TOL
-        }
-        return wvf
+        return _civect_to_qwvf(state_dict, 2 * self.norb)
 
     def __qwvf_to_civect(self, wvf: QubitWaveFunction) -> dict:
-        wvf.n_qubits = 2 * self.norb
-        result = {}
-        for bs, coeff in wvf.items():
-            key = int(bs)
-            if wvf.numbering != BitNumbering.LSB:
-                key = reverse_int_bits(key, 2 * self.norb)
-            if abs(coeff) > _ZERO_TOL:
-                result[key] = complex(coeff)
-        return result
+        return _qwvf_to_civect(wvf, 2 * self.norb)
 
     def build_operator(self, operator: Union[str, FermionOperator, QubitHamiltonian] = None) -> Union[None, Callable, List[spex.FermionTerm]]:
         # Supported: "I"/"H", openfermion FermionOperator, tequila QubitHamiltonian (callable on state dict)
@@ -420,35 +408,79 @@ class SpexExpval:
         return uniques_bra + variables_ket
 
     def _apply_circuit(self, state: dict, circuit, dvars: dict) -> dict:
-        # each gate maps to FermionTerm(creation_idx=[from...], annihilation_idx=[to...], 1j)
-        state = {} if state is None else state
-        result = {int(k): complex(v) for k, v in state.items() if abs(v) > _ZERO_TOL}
-        if circuit is None:
-            return result
-        gates = circuit.gates
-        for gate in gates:
-            indices = gate.indices
-            parameter = gate.variables
-            if not indices:
-                continue
-            if isinstance(parameter, Variable):
-                name = getattr(parameter, 'name', None)
-                if name is not None and name in dvars:
-                    value = dvars[name]
-                elif parameter in dvars:
-                    value = dvars[parameter]
-                else:
-                    value = parameter.map_variables(dvars)
-                if isinstance(value, Variable):
-                    value = value.map_variables(dvars)
-                theta = float(value)
-            else:
-                theta = float(parameter)
-            for term_pairs in indices:
-                creation = [p[0] for p in term_pairs]
-                annihilation = [p[1] for p in term_pairs]
-                n_pairs = len(term_pairs)
-                weight = 1.0j * ((-1) ** (n_pairs * (n_pairs - 1) // 2))
-                term = spex.FermionTerm(creation, annihilation, weight)
-                result = spex.apply_fermion_excitation(result, term, theta)
+        return _apply_circuit_to_state(state, circuit, dvars)
+
+
+def _qwvf_to_civect(wvf: QubitWaveFunction, n_qubits: int) -> dict:
+    wvf.n_qubits = n_qubits
+    result = {}
+    for bs, coeff in wvf.items():
+        key = int(bs)
+        if wvf.numbering != BitNumbering.LSB:
+            key = reverse_int_bits(key, n_qubits)
+        if abs(coeff) > _ZERO_TOL:
+            result[key] = complex(coeff)
+    return result
+
+
+def _civect_to_qwvf(state_dict: dict, n_qubits: int) -> QubitWaveFunction:
+    wvf = QubitWaveFunction(n_qubits=n_qubits, numbering=BitNumbering.LSB)
+    wvf._state = {
+        int(k): complex(v) for k, v in (state_dict or {}).items() if abs(v) > _ZERO_TOL
+    }
+    return wvf
+
+
+def _apply_circuit_to_state(state: dict, circuit, dvars: dict) -> dict:
+    # each gate maps to FermionTerm(creation_idx=[from...], annihilation_idx=[to...], 1j)
+    state = {} if state is None else state
+    result = {int(k): complex(v) for k, v in state.items() if abs(v) > _ZERO_TOL}
+    if circuit is None:
         return result
+    for gate in circuit.gates:
+        indices = gate.indices
+        parameter = gate.variables
+        if not indices:
+            continue
+        if isinstance(parameter, Variable):
+            name = getattr(parameter, 'name', None)
+            if name is not None and name in dvars:
+                value = dvars[name]
+            elif parameter in dvars:
+                value = dvars[parameter]
+            else:
+                value = parameter.map_variables(dvars)
+            if isinstance(value, Variable):
+                value = value.map_variables(dvars)
+            theta = float(value)
+        else:
+            theta = float(parameter)
+        for term_pairs in indices:
+            creation = [p[0] for p in term_pairs]
+            annihilation = [p[1] for p in term_pairs]
+            n_pairs = len(term_pairs)
+            weight = 1.0j * ((-1) ** (n_pairs * (n_pairs - 1) // 2))
+            term = spex.FermionTerm(creation, annihilation, weight)
+            result = spex.apply_fermion_excitation(result, term, theta)
+    return result
+
+
+def spex_circuit_simulator(U, variables, n_orb, **backend_kwargs) -> QubitWaveFunction:
+    n_qubits = 2 * n_orb
+
+    # Capture the initial state before to_upthendown, which mutates its n_qubits.
+    initial_state = U.initial_state
+    state = _qwvf_to_civect(initial_state, n_qubits) if initial_state is not None else {}
+
+    U = U.to_upthendown(n_orb)
+
+    dvars = {}
+    if variables is not None:
+        for k, val in variables.items():
+            name = getattr(k, 'name', k)
+            dvars[name] = val
+            if isinstance(k, Variable):
+                dvars[k] = val
+
+    state = _apply_circuit_to_state(state, U, dvars)
+    return _civect_to_qwvf(state, n_qubits)
