@@ -349,6 +349,10 @@ class SpexExpval:
                 # in vector order, so both lists are the reversed tuple order.
                 creation = [i for i, a in term if a == 1]
                 annihilation = [i for i, a in term if a == 0]
+                # openfermion numbers spin-orbitals interleaved (even=alpha, odd=beta);
+                # spex works internally in up-then-down ordering, remap the indices.
+                creation = [i // 2 + (i % 2) * self.norb for i in creation]
+                annihilation = [i // 2 + (i % 2) * self.norb for i in annihilation]
                 terms.append(spex.FermionTerm(list(reversed(creation)), list(reversed(annihilation)), weight))
             operator = terms
         elif isinstance(operator, QubitHamiltonian):
