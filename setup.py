@@ -25,7 +25,10 @@ setup(
     zip_safe=False,
     python_requires=">=3.9",
     install_requires=[
-        "pybind11>=2.5.0", 'spex-tequila'
+        "numpy",
+        "tequila-basic>=1.9.0",
+        "openfermion>=1.7.0",
+        "project-sunrise>=0.2.0",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
