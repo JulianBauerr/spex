@@ -88,7 +88,7 @@ Algebraically, the action of these operators on Fock state $\ket{\boldsymbol{n}}
     a_k \ket{\mathbf{n}} &= \delta_{n_k, 1} (-1)^{\sum_{j=0}^{k-1} n_j} \ket{n_0, \dots, n_k - 1, \dots, n_{M-1}}, \\
     a_k^\dagger \ket{\mathbf{n}} &= \delta_{n_k, 0} (-1)^{\sum_{j=0}^{k-1} n_j} \ket{n_0, \dots, n_k + 1, \dots, n_{M-1}},
 \end{align}~\cite[Box 1.1]{helgaker2000molecular}
-where $\delta$ represents the Kronecker delta, enforcing the Pauli exclusion principle defined in \eqref{subsec:pauli-exclusion-principle}.
+where $\delta$ represents the Kronecker delta, enforcing the Pauli exclusion principle defined in \eqref{sec:fermionic-many-body-systems}.
 The phase factor $(-1)^{\sum_{j=0}^{k-1} n_j}$ evaluates to $+1$ for an even occupation count and $-1$ for an odd count.
 
 % Todo: To be revised
@@ -109,7 +109,7 @@ The first part governed by $\cos\left(\frac{\theta}{2}\right) I$, expresses a di
 \end{equation}
 
 The second component involves the coupling and is more complex as it involves the action of the generator.
-The term $-i\sin\left(\frac{\theta}{2}\right)G^{\boldsymbol{k}}_{\boldsymbol{l}}$ can be decompossed into two operational steps.
+The term $-i\sin\left(\frac{\theta}{2}\right)G^{\boldsymbol{k}}_{\boldsymbol{l}}$ can be decomposed into two operational steps.
 First, the algorithm computes the partner state $\ket{\boldsymbol{i'}}$ which can be computed by applying the generator on the basis state.
 \begin{equation}
     c \ket{\boldsymbol{i'}} = -iG^{\boldsymbol{k}}_{\boldsymbol{l}} \ket{\boldsymbol{i}}, \label{eq:qubit-excitation-baseline-partner-state}

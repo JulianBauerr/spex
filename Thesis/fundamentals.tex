@@ -6,17 +6,13 @@
 % ==========================================
 % Section: Fermionic Many-Body Systems
 % ==========================================
-\section{Fermionic Many-Body Systems}
+\section{Fermionic Many-Body Systems}\label{sec:fermionic-many-body-systems}
 Fermions, such as electrons, protons, and neutrons, are particles and primary building blocks of matter.
 They differ from their properties and interactions between each other.
 A Many-Body System describes these interactions between the particles.
 Specifically, a simulation must describe these rules and properties as accurately as possible.
 \cite[chapter 6.1]{benito_kottmann_qc_2025}
 
-% ==========================================
-% Subsection: Indistinguishability
-% ==========================================
-\subsection{Indistinguishability}
 In classical Physics, identical objects and particles can be easily tracked and measured in quantum mechanics this is not possible anymore.
 Identical particles get completely indistinguishable, which means we cannot label the particles nor can we measure their location over time, because this would collapse or disturb the systems state.
 Follows, that if two of the systems particles get swapped the system stays in the same state as before.
@@ -24,19 +20,11 @@ This is because physical quantities are calculated as expectation values ($\bra{
 \cite[chapter 7.1]{sakurai2020modern}\cite[chapter 6.1]{benito_kottmann_qc_2025}
 
 
-% ==========================================
-% Subsection: Permutation Symmetry
-% ==========================================
-\subsection{Permutation Symmetry}
 A system containing only identical particles can either be totally symmetric or antisymmetric under the interchange of any pair.
 For Fermions this interchange would always be strictly antisymmetric, which introduces a global phase factor of $-1$ to the wavefunction, when applying such an interchange.
 Bosons on the other hand are strictly symmetric and therefore do not apply any phase at all.
 \cite[chapter 7.2]{sakurai2020modern}~\cite[chapter 6.1]{benito_kottmann_qc_2025}
 
-% ==========================================
-% Subsection: Pauli Exclusion Principle
-% ==========================================
-\subsection{Pauli Exclusion Principle}\label{subsec:pauli-exclusion-principle}
 We have now enough information to describe the Pauli Exclusion Principle.
 It states that `Two Fermions can not be in the same state.'
 We can see this easily when investigating such a system.
@@ -60,7 +48,7 @@ This implies some physical boundaries:
     \hat{a}^\dagger |1\rangle &= 0.
 \end{align}
 From the Pauli Exclusion Principle also follows that we cannot annihilate two electrons with the same spin at the same position (because only one can exist there), and also we can not create more than one electron with the same spin at the same position. \\
-To understand these very important operators more we can hav a look at the Jordan Wigner (JW) Transformation, that maps fermionic spin orbitals to qubits.
+To understand these very important operators more we can have a look at the Jordan Wigner (JW) Transformation, that maps fermionic spin orbitals to qubits.
 This transformation uses non-local Pauli strings to construct composite operators:
 \begin{align}
     \label{eq:creation_op_jd_transformation}
@@ -68,7 +56,7 @@ This transformation uses non-local Pauli strings to construct composite operator
     \label{eq:annhilation_op_jd_transformation}
     \hat{a}_k &= \mathbb{I}^{\otimes (k-1)} \otimes \hat{\sigma}_k^- \otimes \hat{\sigma}_z^{\otimes (N-k)}.
 \end{align}
-All orbitals before the $k$-th where must be left untouched which here is defined by $\mathbb{I}^{\otimes (k-1)}$.
+All orbitals before the $k$-th must be left untouched which here is defined by $\mathbb{I}^{\otimes (k-1)}$.
 The annihilation and creation takes place in the local ladder operators, which are defined as,
 \begin{equation}
     \hat{\sigma}_k^\pm = \frac{1}{2}(\hat{\sigma}_x \pm i\hat{\sigma}_y).\label{eq:ladder_operators}

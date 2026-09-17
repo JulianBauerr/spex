@@ -2,3 +2,44 @@
 \label{c:summary}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Summary
+
+This thesis presented the development of an efficient, matrix-free C++ simulator for second-quantized fermionic operators.
+To overcome the exponential memory scaling associated with tracking identical particles in many-body quantum systems, the simulator implements a sparse state representation.
+By utilizing an unordered hash map the occupation number representation of the Fock space, can be implemented as linking unsigned integer bitstrings to complex probability amplitudes, which avoids saving zero-amplitude states.
+Furthermore, the system encodes arbitrary fermionic Generators and Hamiltonian's by storing their associated creation and annihilation operators using integer vectors.
+This ensures that all possible combinations of operators can be stored and therefore calculated.
+Also, we can therefore implement a straightforward string representations like  Google's OpenFermion.
+
+A central achievement of this work is the implementation of matrix-free direct state evolution.
+Because constructing global unitary matrices for large Hilbert spaces is memory prohibitive, the simulator applies excitation generators directly to the computational basis.
+The algorithm evaluates fermionic parity phases and anticommutation relations by tracking orbital occupancies and utilizing native CPU population counts.
+This eliminates the need for Jordan-Wigner strings and enforces the strict antisymmetry required by the Pauli exclusion principle.
+
+Beyond basic excitations, the simulator calculates fermionic SWAP operations and expectation value evaluations by iterating over non-zero amplitudes.
+It uses bitwise manipulations, such as XOR operations and bit-shifting for nullspace projection, in order to save memory and speed up the operation.
+
+
+% Outlook
+Although the core algorithmic design and C++ implementation provides a foundation, several extensions can potentially further increase its performance and practical utility.
+A natural step for future development could focus on parallelization and integration with quantum chemistry ecosystems.
+
+First, the simulator’s core operations are suited for parallel execution.
+Currently, operations such as applying fermionic excitations and evaluating expectation values iterate over the basis states within the hash map.
+Because each basis state update and nullspace check can be evaluated independently, these inner loops can be parallelized across multiple CPU threads.
+Similar with calculating expectation values.
+Here large sums of Hamiltonian terms are getting calculated one by one which could be parallelized as well, which might decrease runtimes for complex molecular geometries.
+Another not as obvious speedup, could be to vectorize the bitwise state manipulations, mask evaluations, and population counts (e.g. using GPU operations) to process large batches of simultaneously.
+
+Beyond optimization, practical application requires integration into higher level workflows.
+To bridge the gap between C++ performance and ease of use, an ongoing extension is the development of a dedicated Python wrapper module.
+By exposing the underlying operations to Python, the simulator can be integrated into quantum chemistry packages.
+
+The following features could be implemented with such a wrapper.
+It enables the simulator to serve as an expectation-value backend for parameterized fermionic circuits.
+Users can supply molecular properties, such as one- and two-body integrals, orbital occupations, and electronic spin and build the full fermionic Hamiltonian in Python.
+The wrapper also manages orbital reordering between different spin representations and internal up-then-down formats, maps string operators into native FermionTerm instances, and evaluates parameterized states without exposing the underlying engine.
+Finally, this enables the simulator to be used within Variational Quantum Eigensolver (VQE) algorithms.
+This combines the execution speed of C++ operations with the flexibility of computing platforms.
+

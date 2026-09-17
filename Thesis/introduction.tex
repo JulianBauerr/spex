@@ -2,3 +2,21 @@
 \label{c:introduction}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Simulating the interactions within fermionic many-body systems is a central challenge in modern physics.
+Fermions, such as electrons, are fundamental building blocks of matter which are completely indistinguishable from each other.
+Because of this indistinguishability, swapping two identical fermions introduces a global antisymmetric phase to the system's wavefunction.
+By preventing two fermions from occupying the exact same state, this property enforces the Pauli exclusion principle.
+To be able to model these properties without tracking spatial coordinates, physicists rely on the second quantization framework and the Fock space.
+By using the occupation number representation, we can describe a quantum system by tracking the occupancy of individual spin-orbitals.
+
+However, translating this mathematical model into a computational one presents a severe bottleneck.
+Storing quantum states dynamically using static structures like dense arrays scales exponentially and wastes memory on unnecessary zero-amplitude states.
+Furthermore, executing quantum chemical simulations on physical quantum hardware can introduce challenges.
+Standard methods, such as the Jordan-Wigner transformation, often map fermionic operators to qubits using nonlocal Pauli strings.
+When implementing it on actual quantum devices, this mapping requires deep CNOT circuits and Pauli-Z chains.
+These factors can make the constructing and applying of full global unitary matrices highly memory prohibitive.
+
+To overcome these limitations, this thesis presents the algorithmic design and implementation of a C++ simulator specifically tailored for second-quantized fermionic operators.
+The goal is to bypass physical hardware constraints and memory limits by using a matrix-free direct state evolution.
+This approach eliminates the need for Jordan-Wigner strings and allows an efficient simulations of many-body systems while enforcing the antisymmetry required by the Pauli exclusion principle.
+
