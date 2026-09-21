@@ -12,7 +12,7 @@ ext_modules = [
 ]
 
 setup(
-    name="spex-fermionic-tequila",
+    name="spex-tequila",
     version="1.0.0",
     author="Julian Bauer",
     author_email="julian.bauer@mbtj.de",
@@ -28,7 +28,6 @@ setup(
     keywords=["quantum", "fermionic", "expectation value", "tequila", "pybind11"],
     ext_modules=ext_modules,
     cmdclass={"build_ext": build_ext},
-    py_modules=["spex_expval"],
     packages=find_packages(exclude=["tests", "tests.*"]),
     include_package_data=True,
     zip_safe=False,
