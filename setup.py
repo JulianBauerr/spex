@@ -14,8 +14,8 @@ ext_modules = [
 setup(
     name="spex-tequila",
     version="1.0.0",
-    author="Julian Bauer",
-    author_email="Michael Lang, Julian Bauer and spex developer",
+    author="Michael Lang, Julian Bauer and spex developer",
+    author_email="",
     url="https://github.com/tequilahub/spex",
     description=(
         "Qubit/Fermionic expectation-value and excitation simulator for Tequila, "
@@ -33,12 +33,13 @@ setup(
     zip_safe=False,
     python_requires=">=3.9",
     install_requires=[
-        "numpy",
-        "tequila-basic>=1.9.0",
-        "openfermion>=1.7.0",
+        "pybind11>=2.5.0",
     ],
     extras_require={
         "test": [
+            "numpy",
+            "tequila-basic>=1.9.0",
+            "openfermion>=1.7.0",
             "pytest",
             "pyscf",
             "qulacs",
