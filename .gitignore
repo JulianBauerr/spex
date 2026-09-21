@@ -74,6 +74,3 @@ Makefile
 
 # Generated files
 *.cmake
-
-# Latex out
-/out
