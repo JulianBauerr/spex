@@ -1,13 +1,10 @@
 import spex_tequila as spex
 
-from sunrise.fermionic_operations.circuit import FCircuit
-
-from tequila import TequilaException, QubitWaveFunction, Variable, QubitHamiltonian
-from tequila.objective.objective import Variables
+from tequila import TequilaException, QubitWaveFunction, QubitHamiltonian
 from tequila.quantumchemistry.chemistry_tools import NBodyTensor
 from tequila.quantumchemistry import qc_base
 from tequila.utils.bitstrings import BitNumbering, reverse_int_bits
-from numpy import eye, ndarray, array, complex128, real, argwhere
+from numpy import eye, ndarray, array, complex128, real
 from openfermion import FermionOperator
 from numbers import Number
 from typing import Union, List, Callable
@@ -19,19 +16,13 @@ _ZERO_TOL = 1e-12
 class SpexExpval:
     def __init__(
         self,
-        bra: Union['FCircuit', None] = None,
-        ket: Union['FCircuit', None] = None,
         operator: Union[str, FermionOperator, List[FermionOperator]] = None,
-        backend_kwargs: dict = {},
-        *args,
         **kwargs,
     ):
         self.operator = None
         self.hamiltonian: List[spex.FermionTerm] = []
         self._init_state_bra: dict = None
         self._init_state_ket: dict = None
-        self._ket = None
-        self._bra = None
         self._name = None
 
         # Molecule Data
@@ -48,14 +39,6 @@ class SpexExpval:
         self.basis = None
         self.active_space = None
 
-        if 'circuit' in kwargs:
-            if ket is not None:
-                raise TequilaException('Two circuits provided?')
-            ket = kwargs.pop('circuit')
-        if 'U' in kwargs:
-            if ket is not None:
-                raise TequilaException('Two circuits provided?')
-            ket = kwargs.pop('U')
         if 'H' in kwargs:
             if operator is not None:
                 raise TequilaException('Two operators provided?')
@@ -64,8 +47,6 @@ class SpexExpval:
             if 'molecule' in kwargs and kwargs['molecule']:
                 raise TequilaException('Two molecules provided?')
             kwargs['molecule'] = kwargs.pop('mol')
-
-        run_hf = (bra is None or bra.initial_state is None) and (ket is None or ket.initial_state is None)
 
         if 'molecule' in kwargs and kwargs['molecule']:
             molecule = kwargs.pop('molecule')
@@ -113,7 +94,6 @@ class SpexExpval:
                 self.symmetry = kwargs.pop('symmetry')
         else:
             int1e = None
-            int2e = None
             int2e = None
             e_core = None
             mo_coeff = None
@@ -170,13 +150,6 @@ class SpexExpval:
                 n_alpha = kwargs.pop('n_alpha')
                 n_beta = kwargs.pop('n_beta')
                 n_elec = n_alpha + n_beta
-            elif ket is not None and ket.initial_state is not None:
-                if isinstance(ket.initial_state._state, dict):
-                    n_elec = bin([*ket.initial_state._state.keys()][0])[2:].count('1')
-                else:
-                    n_elec = bin(argwhere(ket.initial_state._state > 1.e-6)[0][0])[2:].count('1')
-                n_alpha = int((n_elec + 2 * spin) // 2)
-                n_beta = int((n_elec - 2 * spin) // 2)
             else:
                 raise TequilaException('No manner of defining the amount of electrons provided')
             if n_alpha is None and n_elec is not None:
@@ -204,20 +177,15 @@ class SpexExpval:
 
         self.hamiltonian = self._build_hamiltonian()
 
-        if run_hf:
-            occupied = [i for i in range(self.n_alpha)] + [self.norb + i for i in range(self.n_beta)]
-            hf_state = {sum(1 << o for o in occupied): 1.0}
-            self._init_state_bra = hf_state
-            self._init_state_ket = hf_state
+        occupied = [i for i in range(self.n_alpha)] + [self.norb + i for i in range(self.n_beta)]
+        hf_state = {sum(1 << o for o in occupied): 1.0}
+        self._init_state_bra = hf_state
+        self._init_state_ket = hf_state
 
-        if ket is not None:
-            self.ket = ket
-        if bra is not None:
-            self.bra = bra
         if 'name' in kwargs:
             self._name = kwargs.pop('name')
         else:
-            self._name = 'Expectation Value' if self.is_diagonal else 'Transition Value'
+            self._name = 'Expectation Value'
         if operator is None:
             operator = 'H'
         if isinstance(operator, str) and operator == 'I':
@@ -255,38 +223,6 @@ class SpexExpval:
         return terms
 
     @property
-    def bra(self) -> 'FCircuit':
-        return self._bra
-
-    @bra.setter
-    def bra(self, bra):
-        if not isinstance(bra, FCircuit):
-            raise TypeError(f"FCircuit expected, received {type(bra).__name__}")
-        if bra.initial_state is not None:
-            self._init_state_bra = self.__qwvf_to_civect(bra.initial_state)
-        bra = bra.to_upthendown(self.norb)
-        self._bra = bra
-
-    @property
-    def ket(self) -> 'FCircuit':
-        return self._ket
-
-    @ket.setter
-    def ket(self, ket):
-        if not isinstance(ket, FCircuit):
-            raise TypeError(f"FCircuit expected, received {type(ket).__name__}")
-        if ket.initial_state is not None:
-            self._init_state_ket = self.__qwvf_to_civect(ket.initial_state)
-        ket = ket.to_upthendown(self.norb)
-        self._ket = ket
-
-    @property
-    def variables(self) -> List[Variable]:
-        bra = self.bra.variables if self.bra is not None else []
-        ket = self.ket.variables if self.ket is not None else []
-        return bra + ket
-
-    @property
     def init_state(self) -> tuple:
         return self.__civect_to_qwvf(self._init_state_bra), self.__civect_to_qwvf(self._init_state_ket)
 
@@ -294,14 +230,6 @@ class SpexExpval:
     def init_state(self, init_state: QubitWaveFunction):
         self._init_state_bra = self.__qwvf_to_civect(init_state)
         self._init_state_ket = self.__qwvf_to_civect(init_state)
-
-    @property
-    def is_diagonal(self):
-        return self.bra is None or self.ket is None or self.bra == self.ket
-
-    @property
-    def U(self):
-        return self.ket if self.is_diagonal else [self.bra, self.ket]
 
     def __civect_to_qwvf(self, state_dict: dict) -> QubitWaveFunction:
         return _civect_to_qwvf(state_dict, 2 * self.norb)
@@ -318,7 +246,7 @@ class SpexExpval:
             elif operator.upper() == "H":
                 return self.hamiltonian
             else:
-                raise TequilaException(f"No operator str {operator} supported on Spex BraKet")
+                raise TequilaException(f"No operator str {operator} supported on SpexExpval")
 
         if isinstance(operator, str):
             operator = from_string(operator)
@@ -357,58 +285,18 @@ class SpexExpval:
 
         return operator
 
-    def __call__(self, variables: Union[list, dict, Variables] = {}, *args, **kwargs) -> float:
+    def __call__(self, variables=None, *args, **kwargs) -> float:
         return self.simulate(variables=variables)
 
-    def simulate(self, variables: Union[list, dict, Variables] = None) -> float:
-        variables = {} if variables is None else variables
-        if isinstance(variables, Variables):
-            variables = variables.store
-        if not isinstance(variables, dict):
-            raise TequilaException(f'variables must be a dict or tequila Variables, received {type(variables).__name__}')
-
-        # Normalize keys: Variable objects and their names are both accepted.
-        dvars = {}
-        for k, val in variables.items():
-            name = getattr(k, 'name', k)
-            dvars[name] = val
-            if isinstance(k, Variable):
-                dvars[k] = val
-
-        check_variables = {k: (k in dvars or getattr(k, 'name', None) in dvars) for k in self.extract_variables()}
-        if not all(check_variables.values()):
-            missing = [k for k, v in check_variables.items() if not v]
-            raise TequilaException(f'Objective did not receive all variables: {variables} given, missing {missing}')
-
-        ket_state = self._apply_circuit(self._init_state_ket, self.ket, dvars)
-        if self.is_diagonal:
-            bra_state = ket_state
-        else:
-            bra_state = self._apply_circuit(self._init_state_bra, self.bra, dvars)
-
+    def simulate(self, variables=None) -> float:
+        state = self._init_state_ket
         if callable(self.operator):
-            ket_state = self.operator(ket_state)
+            state = self.operator(state)
         if isinstance(self.operator, list):
-            result = spex.expectation_value_fermionic(bra_state, ket_state, self.operator)
+            result = spex.expectation_value_fermionic(state, state, self.operator)
         else:
-            result = spex.expectation_value_fermionic(bra_state, ket_state, [spex.FermionTerm([], [], 1.0)])
+            result = spex.expectation_value_fermionic(state, state, [spex.FermionTerm([], [], 1.0)])
         return float(real(result))
-
-    def extract_variables(self) -> List[Variable]:
-        variables_bra = []
-        variables_ket = []
-        uniques_bra = []
-        if self.bra is not None:
-            variables_bra = self.bra.extract_variables()
-        if self.ket is not None:
-            variables_ket = self.ket.extract_variables()
-        for v in variables_bra:
-            if v not in variables_ket:
-                uniques_bra.append(v)
-        return uniques_bra + variables_ket
-
-    def _apply_circuit(self, state: dict, circuit, dvars: dict) -> dict:
-        return _apply_circuit_to_state(state, circuit, dvars)
 
 
 def _qwvf_to_civect(wvf: QubitWaveFunction, n_qubits: int) -> dict:
@@ -429,58 +317,3 @@ def _civect_to_qwvf(state_dict: dict, n_qubits: int) -> QubitWaveFunction:
         int(k): complex(v) for k, v in (state_dict or {}).items() if abs(v) > _ZERO_TOL
     }
     return wvf
-
-
-def _apply_circuit_to_state(state: dict, circuit, dvars: dict) -> dict:
-    # each gate maps to FermionTerm(creation_idx=[from...], annihilation_idx=[to...], 1j)
-    state = {} if state is None else state
-    result = {int(k): complex(v) for k, v in state.items() if abs(v) > _ZERO_TOL}
-    if circuit is None:
-        return result
-    for gate in circuit.gates:
-        indices = gate.indices
-        parameter = gate.variables
-        if not indices:
-            continue
-        if isinstance(parameter, Variable):
-            name = getattr(parameter, 'name', None)
-            if name is not None and name in dvars:
-                value = dvars[name]
-            elif parameter in dvars:
-                value = dvars[parameter]
-            else:
-                value = parameter.map_variables(dvars)
-            if isinstance(value, Variable):
-                value = value.map_variables(dvars)
-            theta = float(value)
-        else:
-            theta = float(parameter)
-        for term_pairs in indices:
-            creation = [p[0] for p in term_pairs]
-            annihilation = [p[1] for p in term_pairs]
-            n_pairs = len(term_pairs)
-            weight = 1.0j * ((-1) ** (n_pairs * (n_pairs - 1) // 2))
-            term = spex.FermionTerm(creation, annihilation, weight)
-            result = spex.apply_fermion_excitation(result, term, theta)
-    return result
-
-
-def spex_circuit_simulator(U, variables, n_orb, **backend_kwargs) -> QubitWaveFunction:
-    n_qubits = 2 * n_orb
-
-    # Capture the initial state before to_upthendown, which mutates its n_qubits.
-    initial_state = U.initial_state
-    state = _qwvf_to_civect(initial_state, n_qubits) if initial_state is not None else {}
-
-    U = U.to_upthendown(n_orb)
-
-    dvars = {}
-    if variables is not None:
-        for k, val in variables.items():
-            name = getattr(k, 'name', k)
-            dvars[name] = val
-            if isinstance(k, Variable):
-                dvars[k] = val
-
-    state = _apply_circuit_to_state(state, U, dvars)
-    return _civect_to_qwvf(state, n_qubits)

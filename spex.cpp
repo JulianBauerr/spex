@@ -380,6 +380,12 @@ PYBIND11_MODULE(spex_tequila, p) {
         "Apply the fSWAP operator on modes i, j to a quantum state",
         py::arg("state"), py::arg("i"), py::arg("j"));
 
+    // Expose apply_qubit_excitation function
+    p.def("apply_qubit_excitation", &apply_qubit_excitation,
+        "Apply the qubit excitation U = cos(θ/2)·I - i·sin(θ/2)·(|k⟩⟨l| + |l⟩⟨k|) "
+        "on the orbitals k and l to a quantum state",
+        py::arg("state"), py::arg("k"), py::arg("l"), py::arg("theta"));
+
     // Expose apply_fermion_excitation function (generalized)
     p.def("apply_fermion_excitation", &apply_fermionic_excitation,
         "Apply exp(-i*θ/2 * (w·A + w̄·A†)) to |ψ⟩ where A = Π a†_c Π a_a",
