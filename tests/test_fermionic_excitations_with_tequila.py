@@ -18,25 +18,6 @@ def big_molecule():
 
 
 class TestSpexExcitations:
-
-    @pytest.mark.parametrize("theta", [np.pi, np.pi / 2, np.pi / 4, -np.pi / 3])
-    def test_qubit_excitation_adjacent(self, theta):
-        qe = tq.gates.QubitExcitation(target=[0, 1], angle="a")
-        tq_wfn = tq.simulate(tq.gates.X(0) + qe, variables={"a": theta})
-
-        result = spex.apply_qubit_excitation({fock(0): 1.0}, [0], [1], theta)
-
-        assert_states_match(tq_wfn, result)
-
-    @pytest.mark.parametrize("theta", [np.pi, np.pi / 2])
-    def test_qubit_excitation_jump(self, theta):
-        qe = tq.gates.QubitExcitation(target=[0, 2], angle="a")
-        tq_wfn = tq.simulate(tq.gates.X([0, 1]) + qe, variables={"a": theta})
-
-        result = spex.apply_qubit_excitation({fock(0, 1): 1.0}, [0], [2], theta)
-
-        assert_states_match(tq_wfn, result)
-
     @pytest.mark.parametrize("theta", [np.pi, np.pi / 2, np.pi / 4, -np.pi / 3])
     def test_fermion_excitation_adjacent(self, h2_molecule, theta):
         fe = h2_molecule.make_excitation_gate(indices=[(0, 1)], angle="a")

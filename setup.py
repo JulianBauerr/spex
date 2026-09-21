@@ -15,10 +15,10 @@ setup(
     name="spex-tequila",
     version="1.0.0",
     author="Julian Bauer",
-    author_email="julian.bauer@mbtj.de",
-    url="https://git.rz.uni-augsburg.de/qalg-a/spex",
+    author_email="Michael Lang, Julian Bauer and spex developer",
+    url="https://github.com/tequilahub/spex",
     description=(
-        "Fermionic excitation, fSWAP and expectation-value simulator for Tequila, "
+        "Qubit/Fermionic expectation-value and excitation simulator for Tequila, "
         "implemented in C++ using pybind11"
     ),
     long_description=open("README.md", encoding="utf-8").read(),
@@ -37,6 +37,13 @@ setup(
         "tequila-basic>=1.9.0",
         "openfermion>=1.7.0",
     ],
+    extras_require={
+        "test": [
+            "pytest",
+            "pyscf",
+            "qulacs",
+        ],
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",
