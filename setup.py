@@ -13,7 +13,7 @@ ext_modules = [
 
 setup(
     name="spex-tequila",
-    version="1.0.0",
+    version="1.1.0",
     author="Michael Lang, Julian Bauer and spex developer",
     author_email="",
     url="https://github.com/tequilahub/spex",
